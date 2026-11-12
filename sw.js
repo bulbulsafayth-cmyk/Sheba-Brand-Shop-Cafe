@@ -1,5 +1,5 @@
 // Sheba Shop — সার্ভিস ওয়ার্কার: নিজের ফাইল নেটওয়ার্ক-ফার্স্ট, বাকি সব (Supabase, CDN) সরাসরি নেটওয়ার্কে
-const CACHE = 'sheba-v1.4';
+const CACHE = 'sheba-v1.5';
 self.addEventListener('install', e => {
   self.skipWaiting();
   e.waitUntil(caches.open(CACHE).then(c =>

@@ -8,7 +8,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icon-192.png">
-<title>Sheba Brand Shop Cafe | Management v1.4</title>
+<title>Sheba Brand Shop Cafe | Management v1.5</title>
 <style>
 :root{--navy:#14213d;--blue:#2563eb;--bg:#f4f7fb;--white:#fff;--muted:#64748b;--green:#15803d;--red:#b91c1c;--orange:#c2410c}
 *{box-sizing:border-box}body{margin:0;font-family:Arial,"Noto Sans Bengali",sans-serif;background:var(--bg);color:#172033}
@@ -72,11 +72,12 @@ tr.voided td:last-child{text-decoration:none}
 <header>
  <div>
   <h1>Sheba Brand Shop Cafe</h1>
-  <p>Mobile Showroom Management · Version 1.4</p>
+  <p>Mobile Showroom Management · Version 1.5</p>
  </div>
  <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
   <span id="userBadge" class="pill hidden"></span>
   <span class="pill">Supabase Auth</span>
+  <button id="langBtn" class="secondary" data-i18n-skip type="button" title="Language / ভাষা">English</button>
   <button id="logoutBtn" class="secondary hidden">লগআউট</button>
  </div>
 </header>
@@ -335,7 +336,7 @@ tr.voided td:last-child{text-decoration:none}
 
 <div id="invoiceArea"></div>
 
-<footer>Sheba Brand Shop Cafe · Version 1.4 · Multi-User · বাকি · ইনভয়েস · ট্রান্সফার</footer>
+<footer>Sheba Brand Shop Cafe · Version 1.5 · Multi-User · বাকি · ইনভয়েস · ট্রান্সফার</footer>
 
 <script>
 // ========== SUPABASE CONFIG ==========
@@ -1463,6 +1464,102 @@ setSessionUI().then(() => { if(pendingDenyMessage) authStatus.textContent = pend
     console.error(err);
     authStatus.textContent = 'প্রাথমিক সংযোগে সমস্যা: ' + (err.message || 'পেজ রিফ্রেশ করুন');
   });
+</script>
+
+<script>
+/* ===== ভাষা বদল (বাংলা / English) =====
+   ইংরেজি মোডে পেজের সব বাংলা লেখা (স্ট্যাটিক, ডাইনামিক, alert/confirm/prompt, Supabase এরর) ইংরেজিতে বদলায়।
+   ডেটাবেসে রাখা পণ্য/কাস্টমারের নাম যেমন আছে তেমনই থাকে। */
+(function(){
+  var LANG_KEY = 'sheba_lang';
+  var lang = 'bn';
+  try { lang = localStorage.getItem(LANG_KEY) === 'en' ? 'en' : 'bn'; } catch(e){}
+  var m = /[#&]lang=(en|bn)/.exec(location.hash || '');
+  if(m) lang = m[1];
+
+  var btn = document.getElementById('langBtn');
+  if(btn){
+    btn.textContent = lang === 'en' ? 'বাংলা' : 'English';
+    btn.addEventListener('click', function(){
+      var next = lang === 'en' ? 'bn' : 'en';
+      try { localStorage.setItem(LANG_KEY, next); } catch(e){}
+      location.hash = 'lang=' + next;
+      location.reload();
+    });
+  }
+  if(lang !== 'en') return;
+
+  var DICT = {"বিক্রিত পণ্য ফেরতের ক্ষেত্রে এই ইনভয়েস দেখাতে হবে": "This invoice must be shown when returning sold items", "নিচে সারি যোগ করে একসাথে অনেক পণ্য এন্ট্রি দিন": "Add rows below to enter many products at once", "নিজের ইউজার আইডি ও পাসওয়ার্ড দিয়ে লগইন করুন": "Log in with your own user ID and password", "ইন্টারনেট সংযোগ পরীক্ষা করে পেজ রিফ্রেশ করুন": "Check your internet connection and refresh the page", "পরিশোধিত টাকা ০ থেকে মোট টাকার মধ্যে হতে হবে": "Paid amount must be between 0 and the total amount", "পুরো টাকা না পেলে বাকি হিসেবে জমা থাকবে এবং": "If the full amount is not received, the remainder is saved as due and is collected from the", "ক্রয় সংরক্ষণ হয়েছে এবং স্টক আপডেট হয়েছে": "Purchase saved and stock updated", "বিক্রি হওয়া পণ্যের রেকর্ডকৃত ক্রয়মূল্য": "recorded purchase price of sold items", "ওয়ালা পণ্য পুরোটাই ট্রান্সফার করতে হবে": "tracked products must be transferred in full", "ওয়ালা ফোন পুরোটাই নতুন শাখায় চলে যায়": "tracked phones move entirely to the new branch", "বেতন ও অন্যান্য খরচ এতে অন্তর্ভুক্ত নয়": "salary and other expenses are not included", "নম্বর সারিতে ভুল বা অসম্পূর্ণ ডেটা আছে": "number row has wrong or incomplete data", "বাকিতে বিক্রি করতে কাস্টমারের নাম দিন": "Enter the customer name to sell on credit", "প্রয়োজনীয় কলাম খুঁজে পাওয়া যায়নি": "Required columns not found", "ছাড় ০ থেকে মোট দামের মধ্যে হতে হবে": "Discount must be between 0 and the total price", "এই অ্যাকাউন্টের কোনো প্রোফাইল নেই": "This account has no profile", "একই শাখায় ট্রান্সফার করা যায় না": "Cannot transfer to the same branch", "এই ক্রয়ের কিছু পণ্য আগেই বিক্রি": "Some items of this purchase were already sold", "এই শাখার সব পুরনো পণ্য মুছে যাবে": "All old products of this branch will be deleted", "ক্রয়ের রেকর্ডেও সমস্যা হতে পারে": "purchase records may also be affected", "শাখা থেকে শাখায় পণ্য ট্রান্সফার": "Transfer products from branch to branch", "পেমেন্ট মাধ্যম অনুযায়ী বিক্রয়": "Sales by payment method", "ওয়ালা ফোনের পরিমাণ ১ হতে হবে": "tracked phone quantity must be 1", "ব্র্যান্ডের একাধিক সারি থাকলে": "brand in multiple rows,", "এই অ্যাকাউন্টের রোল সঠিক নয়": "This account's role is invalid", "ক্রয়ের রেকর্ড পাওয়া যায়নি": "Purchase record not found", "পণ্য এই শাখায় পাওয়া যায়নি": "Product not found in this branch", "পরিমাণ ও ক্রয়মূল্য সঠিক দিন": "Enter a valid quantity and purchase price", "বিক্রির রেকর্ড পাওয়া যায়নি": "Sale record not found", "সবচেয়ে বেশি বিক্রির ১০ পণ্য": "Top 10 products by sales", "ক্রয় এই রিপোর্টে ধরা হয়নি": "purchases are not counted in this report", "দাম সার্ভার থেকে নেওয়া হয়": "Price is taken from the server", "ফাঁকা ঘর থাকলেও ভুল ধরা হয়": "empty cells also count as errors", "এই বিক্রি বাতিল করা হয়েছে": "This sale has been cancelled", "এই শাখায় আপনার অনুমতি নেই": "You do not have permission for this branch", "কমপক্ষে একটি সঠিক সারি দিন": "Enter at least one valid row", "গন্তব্য শাখা নির্বাচন করুন": "Select a destination branch", "গন্তব্য শাখা পাওয়া যায়নি": "Destination branch not found", "নম্বর সারির তথ্য অসম্পূর্ণ": "number row data is incomplete", "পুরনো পণ্য মুছে ফেলা হচ্ছে": "Deleting old products…", "বিক্রির তথ্য পাওয়া যায়নি": "Sale information not found", "এটি আগেই বাতিল করা হয়েছে": "This was already cancelled", "ট্যাব থেকে আদায় করা যাবে": "tab", "ট্রান্সফার সম্পন্ন হয়েছে": "Transfer completed", "বর্তমানে নির্বাচিত শাখায়": "the currently selected branch", "সার্চ বক্স অনুযায়ী ছাঁকা": "filtered by search box", "আপনার শাখা পাওয়া যায়নি": "Your branch was not found", "এর কোনো শাখা ঠিক করা নেই": "has no branch assigned", "চালানো হয়েছে কিনা দেখুন": "check whether it has been run", "বাল্ক এন্ট্রি দিতে পারেন": "can enter bulk entries", "কোনো পণ্য পাওয়া যায়নি": "No products found", "কোনো শাখা পাওয়া যায়নি": "No branches found", "প্রোফাইল লোড করা যায়নি": "Could not load profile", "বিক্রি বাতিল করতে পারেন": "can cancel sales", "ইন্টারনেট পরীক্ষা করুন": "Check your internet", "ক্রয় বাতিল করতে পারেন": "can cancel purchases", "পুরনো পণ্য মোছা যায়নি": "Old products could not be deleted", "প্রতি ইউনিট ক্রয়মূল্য": "Purchase price per unit", "প্রাথমিক সংযোগে সমস্যা": "Initial connection problem", "বর্তমান পণ্য লোড হচ্ছে": "Loading current products…", "ম্যানুয়াল বাল্ক টেবিল": "Manual bulk table", "যোগ হয়ে একটি সারি হবে": "is summed into one row", "শুধু স্টক আছে এমন পণ্য": "only products in stock", "অনলাইন শাখা লোড হয়নি": "Online branches could not be loaded", "ইনভয়েস প্রিন্ট করবেন": "Print the invoice", "ক্রয় বাতিল শুধুমাত্র": "purchase cancel only", "টাকার পরিমাণ সঠিক নয়": "Invalid amount", "ট্রান্সফার করতে পারেন": "can transfer stock", "পণ্য মুছে ফেলা হয়েছে": "Product deleted", "পুরনো মুছে নতুন দিয়ে": "Delete old products, then", "বিক্রি সংরক্ষণ হয়েছে": "Sale saved", "এই শাখার স্টক সারাংশ": "Stock summary of this branch", "গ্রাহক অনুযায়ী বাকি": "Due by customer", "ট্রান্সফার হয়ে গেছে": "transferred", "নতুন পণ্য যোগ হয়েছে": "New products were added,", "নতুন শাখার নাম লিখুন": "Enter the new branch name", "পরিশোধিত টাকা ০ থেকে": "Paid amount must be between 0 and", "পুরনোগুলো হাতে মুছুন": "delete the old ones manually", "বিক্রি সংরক্ষণ হয়নি": "Sale could not be saved", "বিক্রিটি বাতিল করবেন": "Cancel this sale", "রেকর্ডকৃত ক্রয়মূল্য": "recorded purchase price", "সংযোগ প্রস্তুত হচ্ছে": "connection is getting ready…", "উপরে নির্বাচিত শাখা": "branch selected above", "ক্রয় সংরক্ষণ হয়নি": "Purchase could not be saved", "ক্রয়টি বাতিল করবেন": "Cancel this purchase", "ক্রয়মূল্য সঠিক নয়": "Invalid purchase price", "ট্রান্সফার ও বিক্রি": "Transfers and sales", "ট্রান্সফারের ইতিহাস": "Transfer history", "পণ্য যোগ করতে পারেন": "can add products", "পণ্য সংরক্ষণ হয়েছে": "Product saved", "লাইব্রেরি লোড হয়নি": "library failed to load", "শাখা যোগ করতে পারেন": "can add branches", "এখনো কোনো তথ্য নেই": "No data yet", "কিছু পাওয়া যায়নি": "Nothing found", "টি পণ্য যোগ হয়েছে": "  products added", "নতুন পণ্য যোগ করুন": "Add new product", "পণ্য নির্বাচন করুন": "Select a product", "ফাইল নির্বাচন করুন": "select a file", "বাল্ক পণ্য এন্ট্রি": "Bulk product entry", "লগইন সম্পন্ন হয়নি": "Login was not completed", "শুধু নতুন পণ্য যোগ": "Add only new products", "স্টকে পণ্যের ইউনিট": "Units in stock", "আগে পণ্য যোগ করুন": "Add a product first", "এই শাখার মোট বাকি": "Total due of this branch", "জমা নেওয়া হয়েছে": "Payment received", "টি পণ্য যোগ করবেন": "  products will be added", "পণ্য আপডেট হয়েছে": "Product updated", "বাকিওয়ালা বিক্রি": "Sales with due", "অ্যাডমিনকে জানান": "Please inform the admin", "আবার চেষ্টা করুন": "Please try again", "এই পণ্যটি মুছবেন": "Delete this product", "ট্রান্সফার করবেন": "Proceed with the transfer", "ট্রান্সফার হয়নি": "Transfer failed", "পণ্য মুছতে পারেন": "can delete products", "পেজ রিফ্রেশ করুন": "refresh the page", "ফোন দিয়ে খুঁজুন": "search by phone", "বর্তমান মোট বাকি": "Current total due", "বাকি হলে আবশ্যিক": "required if due", "বাতিল করা বিক্রি": "Cancelled sales", "বাতিল করা হয়েছে": "has been cancelled", "বাতিল বিক্রি বাদ": "cancelled sales excluded", "বাল্ক সেভ ব্যর্থ": "Bulk save failed", "সাপ্লায়ারের নাম": "Supplier name", "আরও ১০০টি দেখান": "Show 100 more", "একসাথে অনেকগুলো": "many at once", "ক্রয় লোড হয়নি": "purchase failed to load", "টি দেখানো হচ্ছে": "  shown", "ট্রান্সফার করুন": "Transfer", "পরিমাণ সঠিক দিন": "Enter a valid quantity", "পরিমাণ সঠিক নয়": "Invalid quantity", "ফাইল পড়া হচ্ছে": "file is being read…", "বাকির বিস্তারিত": "Due details", "শাখা যোগ ব্যর্থ": "Failed to add branch", "শাখা যোগ হয়েছে": "Branch added", "স্টক যথেষ্ট নয়": "Not enough stock", "অন্য পণ্যে আছে": "is on another product", "কাস্টমারের নাম": "Customer name", "ক্রয়ের তালিকা": "Purchase list", "পণ্য লোড হয়নি": "Products failed to load", "পণ্য সেভ হয়নি": "Product could not be saved", "বাকি আছে মাত্র": "Only", "বিক্রি সংরক্ষণ": "Save sale", "বিক্রির তালিকা": "Sales list", "বিক্রির সংখ্যা": "Number of sales", "শুধু হোস্ট করা": "only hosted", "স্টক ফেরত আসবে": "Stock will be returned", "স্টকে পণ্য নেই": "No products in stock", "আগে থেকেই আছে": "already exists", "এর জন্য ইমেইল": "email for", "কত টাকা পেলেন": "How much was received", "ক্রয় সংরক্ষণ": "Save purchase", "পণ্য সম্পাদনা": "Edit product", "পণ্যের তালিকা": "Product list", "পণ্যের নাম বা": "Product name or", "পরিমাণ ১ থেকে": "Quantity must be between 1 and", "পাওয়া যায়নি": "not found", "ফাইলে একই নাম": "If a file has the same name", "বাল্ক সংরক্ষণ": "Save bulk", "শাখা নির্বাচন": "Select branch", "শাখা যোগ করুন": "Add branch", "সংরক্ষণ করবেন": "Save", "সংরক্ষণ হচ্ছে": "Saving…", "সাইটে কাজ করে": "works on the site", "স্টক কমে যাবে": "Stock will decrease", "অজানা সমস্যা": "Unknown problem", "আজকের বিক্রি": "Today's sales", "আনুমানিক লাভ": "Estimated profit", "আপডেট ব্যর্থ": "Update failed", "ইমপোর্ট করুন": "import", "এ লিখা হচ্ছে": "Writing", "এখন কত পেলেন": "Received now", "এর মধ্যে দিন": "", "তখন পরিমাণ ১": "then quantity 1", "দিয়ে খুঁজুন": "search by", "নিশ্চিত করতে": "To confirm", "পণ্য সংরক্ষণ": "Save product", "পরিমাণ লিখুন": "Enter the quantity", "পরীক্ষা করুন": "– please check", "বিক্রয়মূল্য": "Sale price", "মুছতে পারেনি": "Could not delete", "সংযোগ সমস্যা": "Connection problem", "একক ফোন হলে": "if single phone", "করতে পারবেন": "can do this", "ছাড় ০ থেকে": "Discount must be between 0 and", "টাকা ০ থেকে": "Amount must be between 0 and", "টি শাখা লোড": "  branches loaded", "দেওয়া ছাড়": "Discount given", "নতুন বিক্রি": "New sale", "নম্বর সারির": "number row's", "পণ্য ও স্টক": "Products & Stock", "পরিশোধযোগ্য": "Payable", "প্রতি ইউনিট": "Per unit", "বাকি জমা সহ": "incl. due payments", "বাতিল হয়নি": "Could not cancel", "লগইন ব্যর্থ": "Login failed", "লগইন হয়েছে": "Logged in", "লিখে খুঁজুন": "type to search", "স্টকে মাত্র": "Only", "আপডেট করুন": "Update", "আবার আসবেন": "Please visit again", "ইউজার আইডি": "User ID", "করতে পারেন": "can do this", "কারণ লিখুন": "Enter a reason", "ক্রয়মূল্য": "Purchase price", "ট্রান্সফার": "Transfer", "নতুন ক্রয়": "New purchase", "পণ্যের নাম": "Product name", "পাসওয়ার্ড": "Password", "বাকি আদায়": "Collect due", "বাকি থাকবে": "Due will be", "মোট বিক্রি": "Total sales", "লগইন হচ্ছে": "Logging in…", "সাপ্লায়ার": "Supplier", "এর বিক্রি": "its sales", "কোথা থেকে": "From", "ক্যাটাগরি": "Category", "জমা হয়নি": "Payment could not be recorded", "টির মধ্যে": "  —", "নগদ আদায়": "Cash collected", "নির্বাচিত": "Selected", "পুরনো আগে": "Oldest first", "ফোন নম্বর": "Phone number", "ব্র্যান্ড": "Brand", "মোট ক্রয়": "Total purchases", "লগইন করুন": "Please log in", "লোড হয়নি": "failed to load", "শুধুমাত্র": "Only", "উৎস শাখা": "Source branch", "এই শাখার": "this branch's", "কাস্টমার": "Customer", "ক্লিয়ার": "Clear", "নতুন আগে": "Newest first", "নতুন যোগ": "Add new", "পণ্য যোগ": "Add products", "পরিশোধিত": "Paid", "মোট ছাড়": "Total discount", "মোট বাকি": "Total due", "সারি যোগ": "Add row", "স্টক যোগ": "Add stock", "অ্যাকশন": "Action", "ইনভয়েস": "Invoice", "কম স্টক": "Low stock", "জমা নিন": "Receive payment", "ধন্যবাদ": "Thank you", "পর্যন্ত": "To", "পেমেন্ট": "Payment", "বিক্রয়": "Sales", "মোট দাম": "Total price", "রিপোর্ট": "Report", "সতর্কতা": "Notice", "সব সময়": "All time", "সর্বমোট": "Grand total", "৫ বা কম": "5 or less", "এই মাস": "This month", "ঐচ্ছিক": "optional", "কোথায়": "To", "গত মাস": "Last month", "গ্রাহক": "Customer", "টি আছে": "  left in stock", "পরিমাণ": "Quantity", "বাড়াও": "increase", "বিক্রি": "Sales", "ব্যর্থ": "Failed", "মাধ্যম": "Method", "মিলেনি": "does not match", "আদায়": "Collected", "আপডেট": "Update", "করবেন": "proceed", "ক্রয়": "Purchases", "তারিখ": "Date", "দৈনিক": "Daily", "পুরনো": "existing", "ফাঁকা": "blank", "বাতিল": "Void", "ভাড়া": "Rent", "মাসিক": "Monthly", "মুছুন": "Delete", "লগআউট": "Logout", "লিখুন": "type", "শাখার": "Branch", "হয়নি": "failed", "হিসাব": "Summary", "অথবা": "or", "করুন": "please", "কলাম": "Columns", "ছাড়": "Discount", "টাকা": "taka due", "ডেটা": "Data", "থেকে": "From", "নতুন": "New", "পণ্য": "Product", "পুরো": "full", "বাকি": "Due", "মডেল": "model", "যেমন": "e.g.", "লগইন": "Login", "শাখা": "Branch", "শুধু": "Only", "সময়": "Period", "স্টক": "Stock", "আগে": "first", "আছে": "available", "একক": "single", "জমা": "paid in", "দাম": "Price", "ধরন": "Type", "নাম": "Name", "নোট": "Note", "ফোন": "Phone", "ভুল": "wrong", "মাস": "Month", "মোট": "Total", "লাভ": "Profit", "সফল": "Success", "হবে": "will apply", "আজ": "Today", "এই": "This", "টি": "  items", "সব": "All"};
+  var PATTERNS = [["(\\d+) নম্বর সারিতে ভুল বা অসম্পূর্ণ ডেটা আছে", "Row $1 has wrong or incomplete data"], ["(\\d+) নম্বর সারির তথ্য অসম্পূর্ণ/ভুল", "Row $1 data is incomplete/wrong"], ["(\\d+) নম্বর সারির Branch Name মিলেনি", "Row $1 Branch Name does not match"], ["বর্তমানে নির্বাচিত শাখায় Import হবে", "Import will go to the currently selected branch"], ["Supabase-এ লিখা হচ্ছে", "Writing to Supabase"], ["এই Manager-এর কোনো শাখা ঠিক করা নেই", "No branch is assigned to this Manager"], ["(v1\\.4 SQL(?: \\([^)]*\\))?) চালানো হয়েছে কিনা দেখুন", "Check that $1 has been run"], ["শুধুমাত্র Admin পণ্য Edit করতে পারেন", "Only Admin can edit products"], ["শুধুমাত্র Admin Import করতে পারেন", "Only Admin can import"], ["পণ্য যোগ/Edit/Delete/Import, ট্রান্সফার ও বিক্রি-ক্রয় বাতিল শুধুমাত্র Admin করতে পারবেন", "Only Admin can add/edit/delete/import products, transfer stock and cancel sales/purchases"], ["Import করবেন", "Proceed with import"], ["আগে Excel ফাইল নির্বাচন করুন", "Select an Excel file first"], ["নতুন যোগ \\+ পুরনো Quantity বাড়াও", "Add new + increase existing Quantity"], ["অথবা Excel/CSV ইমপোর্ট করুন", "Or import from Excel/CSV"], ["Excel / CSV থেকে Import", "Import from Excel / CSV"], ["Excel থেকে Import", "Import from Excel"], ["নাম / ব্র্যান্ড / IMEI দিয়ে খুঁজুন", "Search by name / brand / IMEI"], ["পণ্য / IMEI / কাস্টমার / ফোন দিয়ে খুঁজুন", "Search by product / IMEI / customer / phone"], ["পণ্যের নাম বা IMEI লিখে খুঁজুন", "Search by product name or IMEI"], ["([\\d-]{10}|…) থেকে ([\\d-]{10}|…)", "$1 to $2"]].map(function(p){ return [new RegExp(p[0], 'g'), p[1]]; });
+  var BN_TEST = /[ঀ-৲৴-৿।]/;
+  var RUN = /[ঀ-৲৴-৿]+(?:[ ‌‍]+[ঀ-৲৴-৿]+)*/g;
+
+  function tr(s){
+    s = String(s);
+    if(!BN_TEST.test(s)) return s;
+    PATTERNS.forEach(function(p){ s = s.replace(p[0], p[1]); });
+    s = s.replace(RUN, function(r){ return Object.prototype.hasOwnProperty.call(DICT, r) ? DICT[r] : r; });
+    s = s.replace(/।/g, '.').replace(/ +([.?!])/g, '$1').replace(/ {2,}/g, ' ');
+    return s;
+  }
+  window.__tr = tr;
+
+  document.documentElement.lang = 'en';
+  document.title = tr(document.title);
+
+  // alert / confirm / prompt
+  var _alert = window.alert, _confirm = window.confirm, _prompt = window.prompt;
+  window.alert = function(msg){ return _alert.call(window, tr(msg)); };
+  window.confirm = function(msg){ return _confirm.call(window, tr(msg)); };
+  window.prompt = function(msg, def){ return _prompt.call(window, tr(msg), def); };
+
+  function skipEl(el){ return !el || !!(el.closest && el.closest('script,style,[data-i18n-skip]')); }
+
+  function fixText(n){
+    var p = n.parentElement;
+    if(skipEl(p)) return;
+    var v = n.nodeValue;
+    if(!BN_TEST.test(v)) return;
+    if((p.id === 'cancelEditBtn' || p.id === 'cancelPayBtn') && v.trim() === 'বাতিল'){ n.nodeValue = 'Cancel'; return; }
+    var t = tr(v);
+    if(t !== v) n.nodeValue = t;
+  }
+  var ATTRS = ['placeholder', 'title', 'aria-label'];
+  function fixAttrs(el){
+    if(skipEl(el)) return;
+    ATTRS.forEach(function(a){
+      if(el.hasAttribute(a)){
+        var v = el.getAttribute(a), t = tr(v);
+        if(t !== v) el.setAttribute(a, t);
+      }
+    });
+  }
+  function scan(node){
+    if(node.nodeType === 3){ fixText(node); return; }
+    if(node.nodeType !== 1 || skipEl(node)) return;
+    fixAttrs(node);
+    node.querySelectorAll('[placeholder],[title],[aria-label]').forEach(fixAttrs);
+    var w = document.createTreeWalker(node, NodeFilter.SHOW_TEXT, null);
+    var list = [], x;
+    while((x = w.nextNode())) list.push(x);
+    list.forEach(fixText);
+  }
+  function handle(records){
+    records.forEach(function(r){
+      if(r.type === 'childList') r.addedNodes.forEach(scan);
+      else if(r.type === 'characterData') fixText(r.target);
+      else if(r.type === 'attributes') fixAttrs(r.target);
+    });
+  }
+  var mo = new MutationObserver(handle);
+  scan(document.body);
+  mo.observe(document.body, { childList: true, subtree: true, characterData: true,
+                              attributes: true, attributeFilter: ATTRS });
+
+  // প্রিন্টের আগে অপেক্ষমাণ অনুবাদ শেষ করা (ইনভয়েস/রিপোর্ট ইংরেজিতে ছাপার জন্য)
+  var _print = window.print;
+  window.print = function(){ handle(mo.takeRecords()); return _print.apply(window, arguments); };
+})();
 </script>
 </body>
 </html>
