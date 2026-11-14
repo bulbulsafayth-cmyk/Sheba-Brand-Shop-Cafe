@@ -8,7 +8,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icon-192.png">
-<title>Sheba Brand Shop Cafe | Management v1.5</title>
+<title>Sheba Brand Shop Cafe | Management v1.6</title>
 <style>
 :root{--navy:#14213d;--blue:#2563eb;--bg:#f4f7fb;--white:#fff;--muted:#64748b;--green:#15803d;--red:#b91c1c;--orange:#c2410c}
 *{box-sizing:border-box}body{margin:0;font-family:Arial,"Noto Sans Bengali",sans-serif;background:var(--bg);color:#172033}
@@ -72,7 +72,7 @@ tr.voided td:last-child{text-decoration:none}
 <header>
  <div>
   <h1>Sheba Brand Shop Cafe</h1>
-  <p>Mobile Showroom Management · Version 1.5</p>
+  <p>Mobile Showroom Management · Version 1.6</p>
  </div>
  <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
   <span id="userBadge" class="pill hidden"></span>
@@ -114,7 +114,6 @@ tr.voided td:last-child{text-decoration:none}
   <button class="active" data-tab="dashboard">Dashboard</button>
   <button data-tab="products">পণ্য ও স্টক</button>
   <button data-tab="sales">বিক্রি</button>
-  <button data-tab="dues">বাকি</button>
   <button data-tab="purchases">ক্রয়</button>
   <button data-tab="transfers" class="adminOnly">ট্রান্সফার</button>
   <button data-tab="reports">রিপোর্ট</button>
@@ -125,7 +124,6 @@ tr.voided td:last-child{text-decoration:none}
   <div class="cards">
    <div class="card"><div class="label">আজকের বিক্রি</div><div class="value" id="todaySales">৳0</div></div>
    <div class="card"><div class="label">মোট বিক্রি</div><div class="value" id="totalSales">৳0</div></div>
-   <div class="card"><div class="label">মোট বাকি</div><div class="value due" id="totalDue">৳0</div></div>
    <div class="card"><div class="label">স্টকে পণ্যের ইউনিট</div><div class="value" id="stockUnits">0</div></div>
    <div class="card"><div class="label">মোট ক্রয়</div><div class="value" id="totalPurchases">৳0</div></div>
    <div class="card"><div class="label">আনুমানিক লাভ*</div><div class="value" id="profit">৳0</div></div>
@@ -210,15 +208,14 @@ tr.voided td:last-child{text-decoration:none}
      <select required name="product" id="saleProduct"></select>
      <input required name="qty" id="saleQty" type="number" min="1" step="1" placeholder="পরিমাণ">
      <input name="discount" id="saleDiscount" type="number" min="0" step="0.01" placeholder="মোট ছাড় (৳, ঐচ্ছিক)">
-     <input name="paid" id="salePaid" type="number" min="0" step="0.01" placeholder="এখন কত পেলেন (ফাঁকা = পুরো)">
-     <input name="customer" placeholder="কাস্টমারের নাম (বাকি হলে আবশ্যিক)">
+     <input name="customer" placeholder="কাস্টমারের নাম (ঐচ্ছিক)">
      <input name="phone" type="tel" placeholder="ফোন নম্বর (ঐচ্ছিক)">
      <select name="payment"><option>Cash</option><option>bKash</option><option>Nagad</option><option>Bank</option><option>Card</option><option>Other</option></select>
     </div>
     <div class="preview" id="salePreview">পণ্য নির্বাচন করুন।</div>
     <button type="submit">বিক্রি সংরক্ষণ</button>
    </form>
-   <p class="small">দাম সার্ভার থেকে নেওয়া হয়। পুরো টাকা না পেলে বাকি হিসেবে জমা থাকবে এবং "বাকি" ট্যাব থেকে আদায় করা যাবে।</p>
+   <p class="small">দাম সার্ভার থেকে নেওয়া হয়।</p>
   </div>
   <div class="panel">
    <h2>বিক্রির তালিকা (নতুন আগে)</h2>
@@ -227,15 +224,6 @@ tr.voided td:last-child{text-decoration:none}
   </div>
  </section>
 
- <!-- DUES -->
- <section id="dues" class="tabcontent hidden">
-  <div class="cards">
-   <div class="card"><div class="label">এই শাখার মোট বাকি</div><div class="value due" id="duesTotal">৳0</div></div>
-   <div class="card"><div class="label">বাকিওয়ালা বিক্রি</div><div class="value" id="duesCount">0</div></div>
-  </div>
-  <div class="panel"><h2>গ্রাহক অনুযায়ী বাকি</h2><div id="duesByCustomer"></div></div>
-  <div class="panel"><h2>বাকির বিস্তারিত (পুরনো আগে)</h2><div id="duesTable"></div></div>
- </section>
 
  <!-- PURCHASES -->
  <section id="purchases" class="tabcontent hidden">
@@ -314,29 +302,9 @@ tr.voided td:last-child{text-decoration:none}
  </div>
 </div>
 
-<!-- DUE PAYMENT MODAL -->
-<div id="payModal" class="modal-overlay hidden">
- <div class="modal">
-  <h3>বাকি আদায়</h3>
-  <p id="payInfo" class="small"></p>
-  <form id="payForm">
-   <input type="hidden" name="id">
-   <div class="formgrid">
-    <input required name="amount" id="payAmount" type="number" min="0.01" step="0.01" placeholder="কত টাকা পেলেন">
-    <select name="method"><option>Cash</option><option>bKash</option><option>Nagad</option><option>Bank</option><option>Card</option><option>Other</option></select>
-    <input name="note" placeholder="নোট (ঐচ্ছিক)">
-   </div>
-   <div class="modal-actions">
-    <button type="button" class="secondary" id="cancelPayBtn">বাতিল</button>
-    <button type="submit">জমা নিন</button>
-   </div>
-  </form>
- </div>
-</div>
-
 <div id="invoiceArea"></div>
 
-<footer>Sheba Brand Shop Cafe · Version 1.5 · Multi-User · বাকি · ইনভয়েস · ট্রান্সফার</footer>
+<footer>Sheba Brand Shop Cafe · Version 1.6 · Multi-User · ইনভয়েস · ট্রান্সফার</footer>
 
 <script>
 // ========== SUPABASE CONFIG ==========
@@ -667,12 +635,11 @@ function renderSales(){
       <td>${esc(s.name)}${s.voided ? ' <span class="pill void">বাতিল</span>' : ''}</td>
       <td>${esc(s.imei || '—')}</td><td>${s.qty}</td>
       <td>${money(s.total)}${s.discount > 0 ? '<div class="small">ছাড়: ' + money(s.discount) + '</div>' : ''}</td>
-      <td class="${s.due > 0 && !s.voided ? 'due' : ''}">${s.voided ? '—' : money(s.due)}</td>
       <td>${esc(s.payment)}</td>
       <td>${esc(s.customer || '—')}${s.phone ? '<div class="small">' + esc(s.phone) + '</div>' : ''}</td>
       <td style="white-space:nowrap">${btns}</td></tr>`;
   });
-  let html = table(rows, ['তারিখ','পণ্য','IMEI','পরিমাণ','মোট','বাকি','পেমেন্ট','কাস্টমার','অ্যাকশন']);
+  let html = table(rows, ['তারিখ','পণ্য','IMEI','পরিমাণ','মোট','পেমেন্ট','কাস্টমার','অ্যাকশন']);
   if(list.length > salesLimit){
     html += `<div class="btn-row"><button class="secondary" onclick="salesLimit+=100;renderSales()">আরও ১০০টি দেখান (মোট ${list.length}টির মধ্যে ${salesLimit}টি দেখানো হচ্ছে)</button></div>`;
   }
@@ -686,33 +653,6 @@ function renderPurchases(){
       <td>${s.qty}</td><td>${money(s.cost)}</td><td>${money(s.total)}</td><td>${esc(s.supplier||'—')}</td>
       <td>${isAdmin() && !s.voided ? `<button class="danger sm" onclick="voidPurchase('${esc(s.id)}')">বাতিল</button>` : ''}</td></tr>`);
   document.getElementById('purchasesTable').innerHTML = table(rows, ['তারিখ','পণ্য','পরিমাণ','প্রতি ইউনিট','মোট','সাপ্লায়ার','']);
-}
-
-function renderDues(){
-  const b = branch();
-  const dues = state.sales.filter(s => s.branch === b && !s.voided && s.due > 0)
-    .slice().sort((a, c) => (a.createdAt < c.createdAt ? -1 : 1));
-  const total = r2(dues.reduce((a, s) => a + s.due, 0));
-  document.getElementById('duesTotal').textContent = money(total);
-  document.getElementById('duesCount').textContent = dues.length;
-
-  const byCust = new Map();
-  dues.forEach(s => {
-    const key = (s.customer || '—') + '|' + (s.phone || '');
-    const cur = byCust.get(key) || { name: s.customer || '—', phone: s.phone, due: 0, count: 0 };
-    cur.due = r2(cur.due + s.due); cur.count++;
-    byCust.set(key, cur);
-  });
-  const custRows = Array.from(byCust.values()).sort((a, c) => c.due - a.due)
-    .map(c => `<tr><td>${esc(c.name)}</td><td>${esc(c.phone || '—')}</td><td>${c.count}</td><td class="due">${money(c.due)}</td></tr>`);
-  document.getElementById('duesByCustomer').innerHTML = table(custRows, ['গ্রাহক','ফোন','বিক্রির সংখ্যা','মোট বাকি']);
-
-  const rows = dues.map(s => `<tr>
-    <td>${esc(s.date)}</td><td>${esc(s.name)}</td><td>${esc(s.customer || '—')}</td><td>${esc(s.phone || '—')}</td>
-    <td>${money(s.total)}</td><td>${money(r2(s.total - s.due))}</td><td class="due">${money(s.due)}</td>
-    <td style="white-space:nowrap"><button class="success sm" onclick="openPay('${esc(s.id)}')">জমা নিন</button>
-    <button class="secondary sm" onclick="printInvoice('${esc(s.id)}')">ইনভয়েস</button></td></tr>`);
-  document.getElementById('duesTable').innerHTML = table(rows, ['তারিখ','পণ্য','গ্রাহক','ফোন','মোট','পরিশোধিত','বাকি','অ্যাকশন']);
 }
 
 function renderTransfers(){
@@ -774,14 +714,12 @@ function render(){
   const todayTotal = r2(ss.filter(s => s.date === t).reduce((a,s) => a + s.total, 0));
   const salesTotal = r2(ss.reduce((a,s) => a + s.total, 0));
   const purchTotal = r2(purs.reduce((a,s) => a + s.total, 0));
-  const dueTotal = r2(ss.reduce((a,s) => a + s.due, 0));
   const units = ps.reduce((a,p) => a + p.qty, 0);
   const low = ps.filter(p => p.qty <= 5).length;
   const profit = r2(ss.reduce((a,s) => a + s.profit, 0));
 
   document.getElementById('todaySales').textContent = money(todayTotal);
   document.getElementById('totalSales').textContent = money(salesTotal);
-  document.getElementById('totalDue').textContent = money(dueTotal);
   document.getElementById('stockUnits').textContent = units;
   document.getElementById('totalPurchases').textContent = money(purchTotal);
   document.getElementById('profit').textContent = money(profit);
@@ -795,7 +733,6 @@ function render(){
   renderProducts();
   renderSales();
   renderPurchases();
-  renderDues();
   renderTransfers();
   updateSelects();
   renderReport();
@@ -1098,18 +1035,14 @@ function updateSalePreview(){
   if(!p){ box.textContent = 'পণ্য নির্বাচন করুন।'; return; }
   const qty = parseNum(document.getElementById('saleQty').value);
   const disc = parseNum(document.getElementById('saleDiscount').value);
-  const paidRaw = document.getElementById('salePaid').value;
   if(!Number.isFinite(qty) || qty < 1){ box.textContent = 'দাম: ' + money(p.price) + ' (প্রতি ইউনিট)। পরিমাণ লিখুন।'; return; }
   const gross = r2(p.price * qty);
   const d = Number.isFinite(disc) ? disc : 0;
   const total = r2(gross - d);
-  const paid = String(paidRaw).trim() === '' ? total : parseNum(paidRaw);
-  const due = Number.isFinite(paid) ? r2(total - paid) : 0;
-  box.innerHTML = `মোট দাম: <strong>${money(gross)}</strong> · ছাড়: ${money(d)} · পরিশোধযোগ্য: <strong>${money(total)}</strong>` +
-    (due > 0 ? ` · <span class="due">বাকি: ${money(due)}</span>` : '');
+  box.innerHTML = `মোট দাম: <strong>${money(gross)}</strong> · ছাড়: ${money(d)} · পরিশোধযোগ্য: <strong>${money(total)}</strong>`;
 }
 
-['saleQty','saleDiscount','salePaid'].forEach(id => document.getElementById(id).addEventListener('input', updateSalePreview));
+['saleQty','saleDiscount'].forEach(id => document.getElementById(id).addEventListener('input', updateSalePreview));
 document.getElementById('saleProduct').addEventListener('change', () => { syncSaleQty(); updateSalePreview(); });
 document.getElementById('saleSearch').addEventListener('input', updateSelects);
 document.getElementById('salesFilter').addEventListener('input', () => { salesLimit = 100; renderSales(); });
@@ -1135,8 +1068,6 @@ document.getElementById('saleForm').addEventListener('submit', async e => {
   if(!Number.isFinite(paid) || paid < 0 || paid > total){ alert('পরিশোধিত টাকা ০ থেকে ' + money(total) + ' এর মধ্যে দিন।'); return; }
 
   const customer = String(f.get('customer')||'').trim();
-  if(paid < total && !customer){ alert('বাকিতে বিক্রি করতে কাস্টমারের নাম দিন।'); return; }
-  if(paid < total && !confirm('বাকি থাকবে ' + money(r2(total - paid)) + '। সংরক্ষণ করবেন?')) return;
 
   const br = currentBranchRow();
   if(!br){ alert('শাখার ID পাওয়া যায়নি।'); return; }
@@ -1175,53 +1106,11 @@ window.voidSale = async id => {
   await loadProductsOnline();
 };
 
-// ========== DUES ==========
-window.openPay = id => {
-  const s = state.sales.find(x => x.id === id);
-  if(!s) return;
-  const f = document.getElementById('payForm');
-  f.elements.id.value = id;
-  f.elements.amount.value = s.due;
-  f.elements.amount.max = s.due;
-  f.elements.note.value = '';
-  document.getElementById('payInfo').textContent = (s.customer || 'গ্রাহক') + ' · ' + s.name + ' · মোট বাকি ' + money(s.due);
-  document.getElementById('payModal').classList.remove('hidden');
-};
-document.getElementById('cancelPayBtn').addEventListener('click', () => document.getElementById('payModal').classList.add('hidden'));
-
-document.getElementById('payForm').addEventListener('submit', async e => {
-  e.preventDefault();
-  const form = e.currentTarget;
-  const f = new FormData(form);
-  const id = f.get('id');
-  const s = state.sales.find(x => x.id === id);
-  const amount = parseNum(f.get('amount'));
-  if(!s){ return; }
-  if(!Number.isFinite(amount) || amount <= 0 || amount > s.due){ alert('টাকা ০ থেকে ' + money(s.due) + ' এর মধ্যে দিন।'); return; }
-
-  const btn = form.querySelector('button[type=submit]');
-  btn.disabled = true;
-  try {
-    const { error } = await sb.rpc('record_due_payment', {
-      p_sale_id: id, p_amount: amount,
-      p_method: String(f.get('method')), p_note: String(f.get('note')||'').trim() || null
-    });
-    if(error) throw error;
-    document.getElementById('payModal').classList.add('hidden');
-    await loadProductsOnline();
-    alert('জমা নেওয়া হয়েছে।');
-  } catch(err){ alert('জমা হয়নি: ' + (err.message || '')); }
-  finally { btn.disabled = false; }
-});
-
 // ========== INVOICE ==========
 window.printInvoice = id => {
   const s = state.sales.find(x => x.id === id);
   if(!s){ alert('বিক্রির তথ্য পাওয়া যায়নি।'); return; }
-  const pays = state.salePayments.filter(p => p.saleId === id);
   const gross = r2(s.unitPrice * s.qty);
-  const paidNow = r2(s.total - s.due);
-  const payRows = pays.map(p => `<tr><td>${esc(p.date)} জমা (${esc(p.method)})</td><td class="r">${money(p.amount)}</td></tr>`).join('');
   const html = `
    <div class="inv">
     <h2>Sheba Brand Shop Cafe</h2>
@@ -1238,9 +1127,7 @@ window.printInvoice = id => {
     <table>
       ${s.discount > 0 ? `<tr><td>ছাড়</td><td class="r">− ${money(s.discount)}</td></tr>` : ''}
       <tr><td><strong>সর্বমোট</strong></td><td class="r"><strong>${money(s.total)}</strong></td></tr>
-      <tr><td>পরিশোধিত (${esc(s.payment)})</td><td class="r">${money(paidNow)}</td></tr>
-      ${payRows}
-      <tr><td><strong>বাকি</strong></td><td class="r"><strong>${money(s.due)}</strong></td></tr>
+      <tr><td>পেমেন্ট</td><td class="r">${esc(s.payment)}</td></tr>
     </table>
     <hr>
     <div class="c">ধন্যবাদ! আবার আসবেন।</div>
@@ -1380,7 +1267,7 @@ function renderReport(){
   const keys = Array.from(agg.keys()).sort().reverse();
   const dayRows = keys.map(k => {
     const a = agg.get(k);
-    return `<tr><td>${esc(k)}</td><td>${a.count}</td><td>${money(r2(a.sales))}</td><td>${money(r2(a.profit))}</td><td>${money(r2(a.purch))}</td><td>${money(r2(a.collected))}</td></tr>`;
+    return `<tr><td>${esc(k)}</td><td>${a.count}</td><td>${money(r2(a.sales))}</td><td>${money(r2(a.profit))}</td><td>${money(r2(a.purch))}</td></tr>`;
   });
 
   const byPay = new Map();
@@ -1405,11 +1292,9 @@ function renderReport(){
       <div class="card"><div class="label">দেওয়া ছাড়</div><div class="value">${money(discountTotal)}</div></div>
       <div class="card"><div class="label">আনুমানিক লাভ</div><div class="value">${money(profitTotal)}</div></div>
       <div class="card"><div class="label">ক্রয়</div><div class="value">${money(purchTotal)}</div></div>
-      <div class="card"><div class="label">নগদ আদায় (বাকি জমা সহ)</div><div class="value">${money(collected)}</div></div>
-      <div class="card"><div class="label">বর্তমান মোট বাকি</div><div class="value due">${money(dueNow)}</div></div>
     </div>
     <h3>${group === 'month' ? 'মাসিক' : 'দৈনিক'} হিসাব</h3>
-    ${table(dayRows, [group === 'month' ? 'মাস' : 'তারিখ','বিক্রির সংখ্যা','বিক্রয়','লাভ','ক্রয়','আদায়'])}
+    ${table(dayRows, [group === 'month' ? 'মাস' : 'তারিখ','বিক্রির সংখ্যা','বিক্রয়','লাভ','ক্রয়'])}
     <h3>পেমেন্ট মাধ্যম অনুযায়ী বিক্রয়</h3>
     ${table(payRows, ['মাধ্যম','মোট'])}
     <h3>সবচেয়ে বেশি বিক্রির ১০ পণ্য</h3>
@@ -1489,8 +1374,8 @@ setSessionUI().then(() => { if(pendingDenyMessage) authStatus.textContent = pend
   }
   if(lang !== 'en') return;
 
-  var DICT = {"বিক্রিত পণ্য ফেরতের ক্ষেত্রে এই ইনভয়েস দেখাতে হবে": "This invoice must be shown when returning sold items", "নিচে সারি যোগ করে একসাথে অনেক পণ্য এন্ট্রি দিন": "Add rows below to enter many products at once", "নিজের ইউজার আইডি ও পাসওয়ার্ড দিয়ে লগইন করুন": "Log in with your own user ID and password", "ইন্টারনেট সংযোগ পরীক্ষা করে পেজ রিফ্রেশ করুন": "Check your internet connection and refresh the page", "পরিশোধিত টাকা ০ থেকে মোট টাকার মধ্যে হতে হবে": "Paid amount must be between 0 and the total amount", "পুরো টাকা না পেলে বাকি হিসেবে জমা থাকবে এবং": "If the full amount is not received, the remainder is saved as due and is collected from the", "ক্রয় সংরক্ষণ হয়েছে এবং স্টক আপডেট হয়েছে": "Purchase saved and stock updated", "বিক্রি হওয়া পণ্যের রেকর্ডকৃত ক্রয়মূল্য": "recorded purchase price of sold items", "ওয়ালা পণ্য পুরোটাই ট্রান্সফার করতে হবে": "tracked products must be transferred in full", "ওয়ালা ফোন পুরোটাই নতুন শাখায় চলে যায়": "tracked phones move entirely to the new branch", "বেতন ও অন্যান্য খরচ এতে অন্তর্ভুক্ত নয়": "salary and other expenses are not included", "নম্বর সারিতে ভুল বা অসম্পূর্ণ ডেটা আছে": "number row has wrong or incomplete data", "বাকিতে বিক্রি করতে কাস্টমারের নাম দিন": "Enter the customer name to sell on credit", "প্রয়োজনীয় কলাম খুঁজে পাওয়া যায়নি": "Required columns not found", "ছাড় ০ থেকে মোট দামের মধ্যে হতে হবে": "Discount must be between 0 and the total price", "এই অ্যাকাউন্টের কোনো প্রোফাইল নেই": "This account has no profile", "একই শাখায় ট্রান্সফার করা যায় না": "Cannot transfer to the same branch", "এই ক্রয়ের কিছু পণ্য আগেই বিক্রি": "Some items of this purchase were already sold", "এই শাখার সব পুরনো পণ্য মুছে যাবে": "All old products of this branch will be deleted", "ক্রয়ের রেকর্ডেও সমস্যা হতে পারে": "purchase records may also be affected", "শাখা থেকে শাখায় পণ্য ট্রান্সফার": "Transfer products from branch to branch", "পেমেন্ট মাধ্যম অনুযায়ী বিক্রয়": "Sales by payment method", "ওয়ালা ফোনের পরিমাণ ১ হতে হবে": "tracked phone quantity must be 1", "ব্র্যান্ডের একাধিক সারি থাকলে": "brand in multiple rows,", "এই অ্যাকাউন্টের রোল সঠিক নয়": "This account's role is invalid", "ক্রয়ের রেকর্ড পাওয়া যায়নি": "Purchase record not found", "পণ্য এই শাখায় পাওয়া যায়নি": "Product not found in this branch", "পরিমাণ ও ক্রয়মূল্য সঠিক দিন": "Enter a valid quantity and purchase price", "বিক্রির রেকর্ড পাওয়া যায়নি": "Sale record not found", "সবচেয়ে বেশি বিক্রির ১০ পণ্য": "Top 10 products by sales", "ক্রয় এই রিপোর্টে ধরা হয়নি": "purchases are not counted in this report", "দাম সার্ভার থেকে নেওয়া হয়": "Price is taken from the server", "ফাঁকা ঘর থাকলেও ভুল ধরা হয়": "empty cells also count as errors", "এই বিক্রি বাতিল করা হয়েছে": "This sale has been cancelled", "এই শাখায় আপনার অনুমতি নেই": "You do not have permission for this branch", "কমপক্ষে একটি সঠিক সারি দিন": "Enter at least one valid row", "গন্তব্য শাখা নির্বাচন করুন": "Select a destination branch", "গন্তব্য শাখা পাওয়া যায়নি": "Destination branch not found", "নম্বর সারির তথ্য অসম্পূর্ণ": "number row data is incomplete", "পুরনো পণ্য মুছে ফেলা হচ্ছে": "Deleting old products…", "বিক্রির তথ্য পাওয়া যায়নি": "Sale information not found", "এটি আগেই বাতিল করা হয়েছে": "This was already cancelled", "ট্যাব থেকে আদায় করা যাবে": "tab", "ট্রান্সফার সম্পন্ন হয়েছে": "Transfer completed", "বর্তমানে নির্বাচিত শাখায়": "the currently selected branch", "সার্চ বক্স অনুযায়ী ছাঁকা": "filtered by search box", "আপনার শাখা পাওয়া যায়নি": "Your branch was not found", "এর কোনো শাখা ঠিক করা নেই": "has no branch assigned", "চালানো হয়েছে কিনা দেখুন": "check whether it has been run", "বাল্ক এন্ট্রি দিতে পারেন": "can enter bulk entries", "কোনো পণ্য পাওয়া যায়নি": "No products found", "কোনো শাখা পাওয়া যায়নি": "No branches found", "প্রোফাইল লোড করা যায়নি": "Could not load profile", "বিক্রি বাতিল করতে পারেন": "can cancel sales", "ইন্টারনেট পরীক্ষা করুন": "Check your internet", "ক্রয় বাতিল করতে পারেন": "can cancel purchases", "পুরনো পণ্য মোছা যায়নি": "Old products could not be deleted", "প্রতি ইউনিট ক্রয়মূল্য": "Purchase price per unit", "প্রাথমিক সংযোগে সমস্যা": "Initial connection problem", "বর্তমান পণ্য লোড হচ্ছে": "Loading current products…", "ম্যানুয়াল বাল্ক টেবিল": "Manual bulk table", "যোগ হয়ে একটি সারি হবে": "is summed into one row", "শুধু স্টক আছে এমন পণ্য": "only products in stock", "অনলাইন শাখা লোড হয়নি": "Online branches could not be loaded", "ইনভয়েস প্রিন্ট করবেন": "Print the invoice", "ক্রয় বাতিল শুধুমাত্র": "purchase cancel only", "টাকার পরিমাণ সঠিক নয়": "Invalid amount", "ট্রান্সফার করতে পারেন": "can transfer stock", "পণ্য মুছে ফেলা হয়েছে": "Product deleted", "পুরনো মুছে নতুন দিয়ে": "Delete old products, then", "বিক্রি সংরক্ষণ হয়েছে": "Sale saved", "এই শাখার স্টক সারাংশ": "Stock summary of this branch", "গ্রাহক অনুযায়ী বাকি": "Due by customer", "ট্রান্সফার হয়ে গেছে": "transferred", "নতুন পণ্য যোগ হয়েছে": "New products were added,", "নতুন শাখার নাম লিখুন": "Enter the new branch name", "পরিশোধিত টাকা ০ থেকে": "Paid amount must be between 0 and", "পুরনোগুলো হাতে মুছুন": "delete the old ones manually", "বিক্রি সংরক্ষণ হয়নি": "Sale could not be saved", "বিক্রিটি বাতিল করবেন": "Cancel this sale", "রেকর্ডকৃত ক্রয়মূল্য": "recorded purchase price", "সংযোগ প্রস্তুত হচ্ছে": "connection is getting ready…", "উপরে নির্বাচিত শাখা": "branch selected above", "ক্রয় সংরক্ষণ হয়নি": "Purchase could not be saved", "ক্রয়টি বাতিল করবেন": "Cancel this purchase", "ক্রয়মূল্য সঠিক নয়": "Invalid purchase price", "ট্রান্সফার ও বিক্রি": "Transfers and sales", "ট্রান্সফারের ইতিহাস": "Transfer history", "পণ্য যোগ করতে পারেন": "can add products", "পণ্য সংরক্ষণ হয়েছে": "Product saved", "লাইব্রেরি লোড হয়নি": "library failed to load", "শাখা যোগ করতে পারেন": "can add branches", "এখনো কোনো তথ্য নেই": "No data yet", "কিছু পাওয়া যায়নি": "Nothing found", "টি পণ্য যোগ হয়েছে": "  products added", "নতুন পণ্য যোগ করুন": "Add new product", "পণ্য নির্বাচন করুন": "Select a product", "ফাইল নির্বাচন করুন": "select a file", "বাল্ক পণ্য এন্ট্রি": "Bulk product entry", "লগইন সম্পন্ন হয়নি": "Login was not completed", "শুধু নতুন পণ্য যোগ": "Add only new products", "স্টকে পণ্যের ইউনিট": "Units in stock", "আগে পণ্য যোগ করুন": "Add a product first", "এই শাখার মোট বাকি": "Total due of this branch", "জমা নেওয়া হয়েছে": "Payment received", "টি পণ্য যোগ করবেন": "  products will be added", "পণ্য আপডেট হয়েছে": "Product updated", "বাকিওয়ালা বিক্রি": "Sales with due", "অ্যাডমিনকে জানান": "Please inform the admin", "আবার চেষ্টা করুন": "Please try again", "এই পণ্যটি মুছবেন": "Delete this product", "ট্রান্সফার করবেন": "Proceed with the transfer", "ট্রান্সফার হয়নি": "Transfer failed", "পণ্য মুছতে পারেন": "can delete products", "পেজ রিফ্রেশ করুন": "refresh the page", "ফোন দিয়ে খুঁজুন": "search by phone", "বর্তমান মোট বাকি": "Current total due", "বাকি হলে আবশ্যিক": "required if due", "বাতিল করা বিক্রি": "Cancelled sales", "বাতিল করা হয়েছে": "has been cancelled", "বাতিল বিক্রি বাদ": "cancelled sales excluded", "বাল্ক সেভ ব্যর্থ": "Bulk save failed", "সাপ্লায়ারের নাম": "Supplier name", "আরও ১০০টি দেখান": "Show 100 more", "একসাথে অনেকগুলো": "many at once", "ক্রয় লোড হয়নি": "purchase failed to load", "টি দেখানো হচ্ছে": "  shown", "ট্রান্সফার করুন": "Transfer", "পরিমাণ সঠিক দিন": "Enter a valid quantity", "পরিমাণ সঠিক নয়": "Invalid quantity", "ফাইল পড়া হচ্ছে": "file is being read…", "বাকির বিস্তারিত": "Due details", "শাখা যোগ ব্যর্থ": "Failed to add branch", "শাখা যোগ হয়েছে": "Branch added", "স্টক যথেষ্ট নয়": "Not enough stock", "অন্য পণ্যে আছে": "is on another product", "কাস্টমারের নাম": "Customer name", "ক্রয়ের তালিকা": "Purchase list", "পণ্য লোড হয়নি": "Products failed to load", "পণ্য সেভ হয়নি": "Product could not be saved", "বাকি আছে মাত্র": "Only", "বিক্রি সংরক্ষণ": "Save sale", "বিক্রির তালিকা": "Sales list", "বিক্রির সংখ্যা": "Number of sales", "শুধু হোস্ট করা": "only hosted", "স্টক ফেরত আসবে": "Stock will be returned", "স্টকে পণ্য নেই": "No products in stock", "আগে থেকেই আছে": "already exists", "এর জন্য ইমেইল": "email for", "কত টাকা পেলেন": "How much was received", "ক্রয় সংরক্ষণ": "Save purchase", "পণ্য সম্পাদনা": "Edit product", "পণ্যের তালিকা": "Product list", "পণ্যের নাম বা": "Product name or", "পরিমাণ ১ থেকে": "Quantity must be between 1 and", "পাওয়া যায়নি": "not found", "ফাইলে একই নাম": "If a file has the same name", "বাল্ক সংরক্ষণ": "Save bulk", "শাখা নির্বাচন": "Select branch", "শাখা যোগ করুন": "Add branch", "সংরক্ষণ করবেন": "Save", "সংরক্ষণ হচ্ছে": "Saving…", "সাইটে কাজ করে": "works on the site", "স্টক কমে যাবে": "Stock will decrease", "অজানা সমস্যা": "Unknown problem", "আজকের বিক্রি": "Today's sales", "আনুমানিক লাভ": "Estimated profit", "আপডেট ব্যর্থ": "Update failed", "ইমপোর্ট করুন": "import", "এ লিখা হচ্ছে": "Writing", "এখন কত পেলেন": "Received now", "এর মধ্যে দিন": "", "তখন পরিমাণ ১": "then quantity 1", "দিয়ে খুঁজুন": "search by", "নিশ্চিত করতে": "To confirm", "পণ্য সংরক্ষণ": "Save product", "পরিমাণ লিখুন": "Enter the quantity", "পরীক্ষা করুন": "– please check", "বিক্রয়মূল্য": "Sale price", "মুছতে পারেনি": "Could not delete", "সংযোগ সমস্যা": "Connection problem", "একক ফোন হলে": "if single phone", "করতে পারবেন": "can do this", "ছাড় ০ থেকে": "Discount must be between 0 and", "টাকা ০ থেকে": "Amount must be between 0 and", "টি শাখা লোড": "  branches loaded", "দেওয়া ছাড়": "Discount given", "নতুন বিক্রি": "New sale", "নম্বর সারির": "number row's", "পণ্য ও স্টক": "Products & Stock", "পরিশোধযোগ্য": "Payable", "প্রতি ইউনিট": "Per unit", "বাকি জমা সহ": "incl. due payments", "বাতিল হয়নি": "Could not cancel", "লগইন ব্যর্থ": "Login failed", "লগইন হয়েছে": "Logged in", "লিখে খুঁজুন": "type to search", "স্টকে মাত্র": "Only", "আপডেট করুন": "Update", "আবার আসবেন": "Please visit again", "ইউজার আইডি": "User ID", "করতে পারেন": "can do this", "কারণ লিখুন": "Enter a reason", "ক্রয়মূল্য": "Purchase price", "ট্রান্সফার": "Transfer", "নতুন ক্রয়": "New purchase", "পণ্যের নাম": "Product name", "পাসওয়ার্ড": "Password", "বাকি আদায়": "Collect due", "বাকি থাকবে": "Due will be", "মোট বিক্রি": "Total sales", "লগইন হচ্ছে": "Logging in…", "সাপ্লায়ার": "Supplier", "এর বিক্রি": "its sales", "কোথা থেকে": "From", "ক্যাটাগরি": "Category", "জমা হয়নি": "Payment could not be recorded", "টির মধ্যে": "  —", "নগদ আদায়": "Cash collected", "নির্বাচিত": "Selected", "পুরনো আগে": "Oldest first", "ফোন নম্বর": "Phone number", "ব্র্যান্ড": "Brand", "মোট ক্রয়": "Total purchases", "লগইন করুন": "Please log in", "লোড হয়নি": "failed to load", "শুধুমাত্র": "Only", "উৎস শাখা": "Source branch", "এই শাখার": "this branch's", "কাস্টমার": "Customer", "ক্লিয়ার": "Clear", "নতুন আগে": "Newest first", "নতুন যোগ": "Add new", "পণ্য যোগ": "Add products", "পরিশোধিত": "Paid", "মোট ছাড়": "Total discount", "মোট বাকি": "Total due", "সারি যোগ": "Add row", "স্টক যোগ": "Add stock", "অ্যাকশন": "Action", "ইনভয়েস": "Invoice", "কম স্টক": "Low stock", "জমা নিন": "Receive payment", "ধন্যবাদ": "Thank you", "পর্যন্ত": "To", "পেমেন্ট": "Payment", "বিক্রয়": "Sales", "মোট দাম": "Total price", "রিপোর্ট": "Report", "সতর্কতা": "Notice", "সব সময়": "All time", "সর্বমোট": "Grand total", "৫ বা কম": "5 or less", "এই মাস": "This month", "ঐচ্ছিক": "optional", "কোথায়": "To", "গত মাস": "Last month", "গ্রাহক": "Customer", "টি আছে": "  left in stock", "পরিমাণ": "Quantity", "বাড়াও": "increase", "বিক্রি": "Sales", "ব্যর্থ": "Failed", "মাধ্যম": "Method", "মিলেনি": "does not match", "আদায়": "Collected", "আপডেট": "Update", "করবেন": "proceed", "ক্রয়": "Purchases", "তারিখ": "Date", "দৈনিক": "Daily", "পুরনো": "existing", "ফাঁকা": "blank", "বাতিল": "Void", "ভাড়া": "Rent", "মাসিক": "Monthly", "মুছুন": "Delete", "লগআউট": "Logout", "লিখুন": "type", "শাখার": "Branch", "হয়নি": "failed", "হিসাব": "Summary", "অথবা": "or", "করুন": "please", "কলাম": "Columns", "ছাড়": "Discount", "টাকা": "taka due", "ডেটা": "Data", "থেকে": "From", "নতুন": "New", "পণ্য": "Product", "পুরো": "full", "বাকি": "Due", "মডেল": "model", "যেমন": "e.g.", "লগইন": "Login", "শাখা": "Branch", "শুধু": "Only", "সময়": "Period", "স্টক": "Stock", "আগে": "first", "আছে": "available", "একক": "single", "জমা": "paid in", "দাম": "Price", "ধরন": "Type", "নাম": "Name", "নোট": "Note", "ফোন": "Phone", "ভুল": "wrong", "মাস": "Month", "মোট": "Total", "লাভ": "Profit", "সফল": "Success", "হবে": "will apply", "আজ": "Today", "এই": "This", "টি": "  items", "সব": "All"};
-  var PATTERNS = [["(\\d+) নম্বর সারিতে ভুল বা অসম্পূর্ণ ডেটা আছে", "Row $1 has wrong or incomplete data"], ["(\\d+) নম্বর সারির তথ্য অসম্পূর্ণ/ভুল", "Row $1 data is incomplete/wrong"], ["(\\d+) নম্বর সারির Branch Name মিলেনি", "Row $1 Branch Name does not match"], ["বর্তমানে নির্বাচিত শাখায় Import হবে", "Import will go to the currently selected branch"], ["Supabase-এ লিখা হচ্ছে", "Writing to Supabase"], ["এই Manager-এর কোনো শাখা ঠিক করা নেই", "No branch is assigned to this Manager"], ["(v1\\.4 SQL(?: \\([^)]*\\))?) চালানো হয়েছে কিনা দেখুন", "Check that $1 has been run"], ["শুধুমাত্র Admin পণ্য Edit করতে পারেন", "Only Admin can edit products"], ["শুধুমাত্র Admin Import করতে পারেন", "Only Admin can import"], ["পণ্য যোগ/Edit/Delete/Import, ট্রান্সফার ও বিক্রি-ক্রয় বাতিল শুধুমাত্র Admin করতে পারবেন", "Only Admin can add/edit/delete/import products, transfer stock and cancel sales/purchases"], ["Import করবেন", "Proceed with import"], ["আগে Excel ফাইল নির্বাচন করুন", "Select an Excel file first"], ["নতুন যোগ \\+ পুরনো Quantity বাড়াও", "Add new + increase existing Quantity"], ["অথবা Excel/CSV ইমপোর্ট করুন", "Or import from Excel/CSV"], ["Excel / CSV থেকে Import", "Import from Excel / CSV"], ["Excel থেকে Import", "Import from Excel"], ["নাম / ব্র্যান্ড / IMEI দিয়ে খুঁজুন", "Search by name / brand / IMEI"], ["পণ্য / IMEI / কাস্টমার / ফোন দিয়ে খুঁজুন", "Search by product / IMEI / customer / phone"], ["পণ্যের নাম বা IMEI লিখে খুঁজুন", "Search by product name or IMEI"], ["([\\d-]{10}|…) থেকে ([\\d-]{10}|…)", "$1 to $2"]].map(function(p){ return [new RegExp(p[0], 'g'), p[1]]; });
+  var DICT = {"বিক্রিত পণ্য ফেরতের ক্ষেত্রে এই ইনভয়েস দেখাতে হবে": "This invoice must be shown when returning sold items", "নিচে সারি যোগ করে একসাথে অনেক পণ্য এন্ট্রি দিন": "Add rows below to enter many products at once", "নিজের ইউজার আইডি ও পাসওয়ার্ড দিয়ে লগইন করুন": "Log in with your own user ID and password", "ইন্টারনেট সংযোগ পরীক্ষা করে পেজ রিফ্রেশ করুন": "Check your internet connection and refresh the page", "পরিশোধিত টাকা ০ থেকে মোট টাকার মধ্যে হতে হবে": "Paid amount must be between 0 and the total amount", "পুরো টাকা না পেলে বাকি হিসেবে জমা থাকবে এবং": "If the full amount is not received, the remainder is saved as due and is collected from the", "ক্রয় সংরক্ষণ হয়েছে এবং স্টক আপডেট হয়েছে": "Purchase saved and stock updated", "বিক্রি হওয়া পণ্যের রেকর্ডকৃত ক্রয়মূল্য": "recorded purchase price of sold items", "ওয়ালা পণ্য পুরোটাই ট্রান্সফার করতে হবে": "tracked products must be transferred in full", "ওয়ালা ফোন পুরোটাই নতুন শাখায় চলে যায়": "tracked phones move entirely to the new branch", "বেতন ও অন্যান্য খরচ এতে অন্তর্ভুক্ত নয়": "salary and other expenses are not included", "নম্বর সারিতে ভুল বা অসম্পূর্ণ ডেটা আছে": "number row has wrong or incomplete data", "বাকিতে বিক্রি করতে কাস্টমারের নাম দিন": "Enter the customer name to sell on credit", "প্রয়োজনীয় কলাম খুঁজে পাওয়া যায়নি": "Required columns not found", "ছাড় ০ থেকে মোট দামের মধ্যে হতে হবে": "Discount must be between 0 and the total price", "এই অ্যাকাউন্টের কোনো প্রোফাইল নেই": "This account has no profile", "একই শাখায় ট্রান্সফার করা যায় না": "Cannot transfer to the same branch", "এই ক্রয়ের কিছু পণ্য আগেই বিক্রি": "Some items of this purchase were already sold", "এই শাখার সব পুরনো পণ্য মুছে যাবে": "All old products of this branch will be deleted", "ক্রয়ের রেকর্ডেও সমস্যা হতে পারে": "purchase records may also be affected", "শাখা থেকে শাখায় পণ্য ট্রান্সফার": "Transfer products from branch to branch", "পেমেন্ট মাধ্যম অনুযায়ী বিক্রয়": "Sales by payment method", "ওয়ালা ফোনের পরিমাণ ১ হতে হবে": "tracked phone quantity must be 1", "ব্র্যান্ডের একাধিক সারি থাকলে": "brand in multiple rows,", "এই অ্যাকাউন্টের রোল সঠিক নয়": "This account's role is invalid", "ক্রয়ের রেকর্ড পাওয়া যায়নি": "Purchase record not found", "পণ্য এই শাখায় পাওয়া যায়নি": "Product not found in this branch", "পরিমাণ ও ক্রয়মূল্য সঠিক দিন": "Enter a valid quantity and purchase price", "বিক্রির রেকর্ড পাওয়া যায়নি": "Sale record not found", "সবচেয়ে বেশি বিক্রির ১০ পণ্য": "Top 10 products by sales", "ক্রয় এই রিপোর্টে ধরা হয়নি": "purchases are not counted in this report", "দাম সার্ভার থেকে নেওয়া হয়": "Price is taken from the server", "ফাঁকা ঘর থাকলেও ভুল ধরা হয়": "empty cells also count as errors", "এই বিক্রি বাতিল করা হয়েছে": "This sale has been cancelled", "এই শাখায় আপনার অনুমতি নেই": "You do not have permission for this branch", "কমপক্ষে একটি সঠিক সারি দিন": "Enter at least one valid row", "গন্তব্য শাখা নির্বাচন করুন": "Select a destination branch", "গন্তব্য শাখা পাওয়া যায়নি": "Destination branch not found", "নম্বর সারির তথ্য অসম্পূর্ণ": "number row data is incomplete", "পুরনো পণ্য মুছে ফেলা হচ্ছে": "Deleting old products…", "বিক্রির তথ্য পাওয়া যায়নি": "Sale information not found", "এটি আগেই বাতিল করা হয়েছে": "This was already cancelled", "ট্যাব থেকে আদায় করা যাবে": "tab", "ট্রান্সফার সম্পন্ন হয়েছে": "Transfer completed", "বর্তমানে নির্বাচিত শাখায়": "the currently selected branch", "সার্চ বক্স অনুযায়ী ছাঁকা": "filtered by search box", "আপনার শাখা পাওয়া যায়নি": "Your branch was not found", "এর কোনো শাখা ঠিক করা নেই": "has no branch assigned", "চালানো হয়েছে কিনা দেখুন": "check whether it has been run", "বাল্ক এন্ট্রি দিতে পারেন": "can enter bulk entries", "কোনো পণ্য পাওয়া যায়নি": "No products found", "কোনো শাখা পাওয়া যায়নি": "No branches found", "প্রোফাইল লোড করা যায়নি": "Could not load profile", "বিক্রি বাতিল করতে পারেন": "can cancel sales", "ইন্টারনেট পরীক্ষা করুন": "Check your internet", "ক্রয় বাতিল করতে পারেন": "can cancel purchases", "পুরনো পণ্য মোছা যায়নি": "Old products could not be deleted", "প্রতি ইউনিট ক্রয়মূল্য": "Purchase price per unit", "প্রাথমিক সংযোগে সমস্যা": "Initial connection problem", "বর্তমান পণ্য লোড হচ্ছে": "Loading current products…", "ম্যানুয়াল বাল্ক টেবিল": "Manual bulk table", "যোগ হয়ে একটি সারি হবে": "is summed into one row", "শুধু স্টক আছে এমন পণ্য": "only products in stock", "অনলাইন শাখা লোড হয়নি": "Online branches could not be loaded", "ইনভয়েস প্রিন্ট করবেন": "Print the invoice", "ক্রয় বাতিল শুধুমাত্র": "purchase cancel only", "টাকার পরিমাণ সঠিক নয়": "Invalid amount", "ট্রান্সফার করতে পারেন": "can transfer stock", "পণ্য মুছে ফেলা হয়েছে": "Product deleted", "পুরনো মুছে নতুন দিয়ে": "Delete old products, then", "বিক্রি সংরক্ষণ হয়েছে": "Sale saved", "এই শাখার স্টক সারাংশ": "Stock summary of this branch", "গ্রাহক অনুযায়ী বাকি": "Due by customer", "ট্রান্সফার হয়ে গেছে": "transferred", "নতুন পণ্য যোগ হয়েছে": "New products were added,", "নতুন শাখার নাম লিখুন": "Enter the new branch name", "পরিশোধিত টাকা ০ থেকে": "Paid amount must be between 0 and", "পুরনোগুলো হাতে মুছুন": "delete the old ones manually", "বিক্রি সংরক্ষণ হয়নি": "Sale could not be saved", "বিক্রিটি বাতিল করবেন": "Cancel this sale", "রেকর্ডকৃত ক্রয়মূল্য": "recorded purchase price", "সংযোগ প্রস্তুত হচ্ছে": "connection is getting ready…", "উপরে নির্বাচিত শাখা": "branch selected above", "ক্রয় সংরক্ষণ হয়নি": "Purchase could not be saved", "ক্রয়টি বাতিল করবেন": "Cancel this purchase", "ক্রয়মূল্য সঠিক নয়": "Invalid purchase price", "ট্রান্সফার ও বিক্রি": "Transfers and sales", "ট্রান্সফারের ইতিহাস": "Transfer history", "পণ্য যোগ করতে পারেন": "can add products", "পণ্য সংরক্ষণ হয়েছে": "Product saved", "লাইব্রেরি লোড হয়নি": "library failed to load", "শাখা যোগ করতে পারেন": "can add branches", "এখনো কোনো তথ্য নেই": "No data yet", "কিছু পাওয়া যায়নি": "Nothing found", "টি পণ্য যোগ হয়েছে": "  products added", "নতুন পণ্য যোগ করুন": "Add new product", "পণ্য নির্বাচন করুন": "Select a product", "ফাইল নির্বাচন করুন": "select a file", "বাল্ক পণ্য এন্ট্রি": "Bulk product entry", "লগইন সম্পন্ন হয়নি": "Login was not completed", "শুধু নতুন পণ্য যোগ": "Add only new products", "স্টকে পণ্যের ইউনিট": "Units in stock", "আগে পণ্য যোগ করুন": "Add a product first", "এই শাখার মোট বাকি": "Total due of this branch", "জমা নেওয়া হয়েছে": "Payment received", "টি পণ্য যোগ করবেন": "  products will be added", "পণ্য আপডেট হয়েছে": "Product updated", "বাকিওয়ালা বিক্রি": "Sales with due", "অ্যাডমিনকে জানান": "Please inform the admin", "আবার চেষ্টা করুন": "Please try again", "এই পণ্যটি মুছবেন": "Delete this product", "ট্রান্সফার করবেন": "Proceed with the transfer", "ট্রান্সফার হয়নি": "Transfer failed", "পণ্য মুছতে পারেন": "can delete products", "পেজ রিফ্রেশ করুন": "refresh the page", "ফোন দিয়ে খুঁজুন": "search by phone", "বর্তমান মোট বাকি": "Current total due", "বাকি হলে আবশ্যিক": "required if due", "বাতিল করা বিক্রি": "Cancelled sales", "বাতিল করা হয়েছে": "has been cancelled", "বাতিল বিক্রি বাদ": "cancelled sales excluded", "বাল্ক সেভ ব্যর্থ": "Bulk save failed", "সাপ্লায়ারের নাম": "Supplier name", "আরও ১০০টি দেখান": "Show 100 more", "একসাথে অনেকগুলো": "many at once", "ক্রয় লোড হয়নি": "purchase failed to load", "টি দেখানো হচ্ছে": "  shown", "ট্রান্সফার করুন": "Transfer", "পরিমাণ সঠিক দিন": "Enter a valid quantity", "পরিমাণ সঠিক নয়": "Invalid quantity", "ফাইল পড়া হচ্ছে": "file is being read…", "বাকির বিস্তারিত": "Due details", "শাখা যোগ ব্যর্থ": "Failed to add branch", "শাখা যোগ হয়েছে": "Branch added", "স্টক যথেষ্ট নয়": "Not enough stock", "অন্য পণ্যে আছে": "is on another product", "কাস্টমারের নাম": "Customer name", "ক্রয়ের তালিকা": "Purchase list", "পণ্য লোড হয়নি": "Products failed to load", "পণ্য সেভ হয়নি": "Product could not be saved", "বাকি আছে মাত্র": "Only", "বিক্রি সংরক্ষণ": "Save sale", "বিক্রির তালিকা": "Sales list", "বিক্রির সংখ্যা": "Number of sales", "শুধু হোস্ট করা": "only hosted", "স্টক ফেরত আসবে": "Stock will be returned", "স্টকে পণ্য নেই": "No products in stock", "আগে থেকেই আছে": "already exists", "এর জন্য ইমেইল": "email for", "কত টাকা পেলেন": "How much was received", "ক্রয় সংরক্ষণ": "Save purchase", "পণ্য সম্পাদনা": "Edit product", "পণ্যের তালিকা": "Product list", "পণ্যের নাম বা": "Product name or", "পরিমাণ ১ থেকে": "Quantity must be between 1 and", "পাওয়া যায়নি": "not found", "ফাইলে একই নাম": "If a file has the same name", "বাল্ক সংরক্ষণ": "Save bulk", "শাখা নির্বাচন": "Select branch", "শাখা যোগ করুন": "Add branch", "সংরক্ষণ করবেন": "Save", "সংরক্ষণ হচ্ছে": "Saving…", "সাইটে কাজ করে": "works on the site", "স্টক কমে যাবে": "Stock will decrease", "অজানা সমস্যা": "Unknown problem", "আজকের বিক্রি": "Today's sales", "আনুমানিক লাভ": "Estimated profit", "আপডেট ব্যর্থ": "Update failed", "ইমপোর্ট করুন": "import", "এ লিখা হচ্ছে": "Writing", "এখন কত পেলেন": "Received now", "এর মধ্যে দিন": "", "তখন পরিমাণ ১": "then quantity 1", "দিয়ে খুঁজুন": "search by", "নিশ্চিত করতে": "To confirm", "পণ্য সংরক্ষণ": "Save product", "পরিমাণ লিখুন": "Enter the quantity", "পরীক্ষা করুন": "– please check", "বিক্রয়মূল্য": "Sale price", "মুছতে পারেনি": "Could not delete", "সংযোগ সমস্যা": "Connection problem", "একক ফোন হলে": "if single phone", "করতে পারবেন": "can do this", "ছাড় ০ থেকে": "Discount must be between 0 and", "টাকা ০ থেকে": "Amount must be between 0 and", "টি শাখা লোড": "  branches loaded", "দেওয়া ছাড়": "Discount given", "নতুন বিক্রি": "New sale", "নম্বর সারির": "number row's", "পণ্য ও স্টক": "Products & Stock", "পরিশোধযোগ্য": "Payable", "প্রতি ইউনিট": "Per unit", "বাকি জমা সহ": "incl. due payments", "বাতিল হয়নি": "Could not cancel", "লগইন ব্যর্থ": "Login failed", "লগইন হয়েছে": "Logged in", "লিখে খুঁজুন": "type to search", "স্টকে মাত্র": "Only", "আপডেট করুন": "Update", "আবার আসবেন": "Please visit again", "ইউজার আইডি": "User ID", "করতে পারেন": "can do this", "কারণ লিখুন": "Enter a reason", "ক্রয়মূল্য": "Purchase price", "ট্রান্সফার": "Transfer", "নতুন ক্রয়": "New purchase", "পণ্যের নাম": "Product name", "পাসওয়ার্ড": "Password", "বাকি আদায়": "Collect due", "বাকি থাকবে": "Due will be", "মোট বিক্রি": "Total sales", "লগইন হচ্ছে": "Logging in…", "সাপ্লায়ার": "Supplier", "এর বিক্রি": "its sales", "কোথা থেকে": "From", "ক্যাটাগরি": "Category", "জমা হয়নি": "Payment could not be recorded", "টির মধ্যে": "  —", "নগদ আদায়": "Cash collected", "নির্বাচিত": "Selected", "পুরনো আগে": "Oldest first", "ফোন নম্বর": "Phone number", "ব্র্যান্ড": "Brand", "মোট ক্রয়": "Total purchases", "লগইন করুন": "Please log in", "লোড হয়নি": "failed to load", "শুধুমাত্র": "Only", "উৎস শাখা": "Source branch", "এই শাখার": "this branch's", "কাস্টমার": "Customer", "ক্লিয়ার": "Clear", "নতুন আগে": "Newest first", "নতুন যোগ": "Add new", "পণ্য যোগ": "Add products", "পরিশোধিত": "Paid", "মোট ছাড়": "Total discount", "মোট বাকি": "Total due", "সারি যোগ": "Add row", "স্টক যোগ": "Add stock", "অ্যাকশন": "Action", "ইনভয়েস": "Invoice", "কম স্টক": "Low stock", "জমা নিন": "Receive payment", "ধন্যবাদ": "Thank you", "পর্যন্ত": "To", "পেমেন্ট": "Payment", "বিক্রয়": "Sales", "মোট দাম": "Total price", "রিপোর্ট": "Report", "সতর্কতা": "Notice", "সব সময়": "All time", "সর্বমোট": "Grand total", "৫ বা কম": "5 or less", "এই মাস": "This month", "ঐচ্ছিক": "optional", "কোথায়": "To", "গত মাস": "Last month", "গ্রাহক": "Customer", "টি আছে": "  left in stock", "পরিমাণ": "Quantity", "বাড়াও": "increase", "বিক্রি": "Sales", "ব্যর্থ": "Failed", "মাধ্যম": "Method", "মিলেনি": "does not match", "আদায়": "Collected", "আপডেট": "Update", "করবেন": "proceed", "ক্রয়": "Purchases", "তারিখ": "Date", "দৈনিক": "Daily", "পুরনো": "existing", "ফাঁকা": "blank", "বাতিল": "Void", "ভাড়া": "Rent", "মাসিক": "Monthly", "মুছুন": "Delete", "লগআউট": "Logout", "লিখুন": "type", "শাখার": "Branch", "হয়নি": "failed", "হিসাব": "Summary", "অথবা": "or", "করুন": "please", "কলাম": "Columns", "ছাড়": "Discount", "টাকা": "taka due", "ডেটা": "Data", "থেকে": "From", "নতুন": "New", "পণ্য": "Product", "পুরো": "full", "বাকি": "Due", "মডেল": "model", "যেমন": "e.g.", "লগইন": "Login", "শাখা": "Branch", "শুধু": "Only", "সময়": "Period", "স্টক": "Stock", "আগে": "first", "আছে": "available", "একক": "single", "জমা": "paid in", "দাম": "Price", "ধরন": "Type", "নাম": "Name", "নোট": "Note", "ফোন": "Phone", "ভুল": "wrong", "মাস": "Month", "মোট": "Total", "লাভ": "Profit", "সফল": "Success", "হবে": "will apply", "আজ": "Today", "এই": "This", "টি": "  items", "সব": "All", "দৈনিক হিসাব": "Daily summary", "মাসিক হিসাব": "Monthly summary"};
+  var PATTERNS = [["\\((\\d+)টি\\)", "($1)"], ["(\\d+) নম্বর সারিতে ভুল বা অসম্পূর্ণ ডেটা আছে", "Row $1 has wrong or incomplete data"], ["(\\d+) নম্বর সারির তথ্য অসম্পূর্ণ/ভুল", "Row $1 data is incomplete/wrong"], ["(\\d+) নম্বর সারির Branch Name মিলেনি", "Row $1 Branch Name does not match"], ["বর্তমানে নির্বাচিত শাখায় Import হবে", "Import will go to the currently selected branch"], ["Supabase-এ লিখা হচ্ছে", "Writing to Supabase"], ["এই Manager-এর কোনো শাখা ঠিক করা নেই", "No branch is assigned to this Manager"], ["(v1\\.4 SQL(?: \\([^)]*\\))?) চালানো হয়েছে কিনা দেখুন", "Check that $1 has been run"], ["শুধুমাত্র Admin পণ্য Edit করতে পারেন", "Only Admin can edit products"], ["শুধুমাত্র Admin Import করতে পারেন", "Only Admin can import"], ["পণ্য যোগ/Edit/Delete/Import, ট্রান্সফার ও বিক্রি-ক্রয় বাতিল শুধুমাত্র Admin করতে পারবেন", "Only Admin can add/edit/delete/import products, transfer stock and cancel sales/purchases"], ["Import করবেন", "Proceed with import"], ["আগে Excel ফাইল নির্বাচন করুন", "Select an Excel file first"], ["নতুন যোগ \\+ পুরনো Quantity বাড়াও", "Add new + increase existing Quantity"], ["অথবা Excel/CSV ইমপোর্ট করুন", "Or import from Excel/CSV"], ["Excel / CSV থেকে Import", "Import from Excel / CSV"], ["Excel থেকে Import", "Import from Excel"], ["নাম / ব্র্যান্ড / IMEI দিয়ে খুঁজুন", "Search by name / brand / IMEI"], ["পণ্য / IMEI / কাস্টমার / ফোন দিয়ে খুঁজুন", "Search by product / IMEI / customer / phone"], ["পণ্যের নাম বা IMEI লিখে খুঁজুন", "Search by product name or IMEI"], ["([\\d-]{10}|…) থেকে ([\\d-]{10}|…)", "$1 to $2"]].map(function(p){ return [new RegExp(p[0], 'g'), p[1]]; });
   var BN_TEST = /[ঀ-৲৴-৿।]/;
   var RUN = /[ঀ-৲৴-৿]+(?:[ ‌‍]+[ঀ-৲৴-৿]+)*/g;
 
