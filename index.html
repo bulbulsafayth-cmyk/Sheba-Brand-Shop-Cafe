@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="bn">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -23,7 +23,25 @@ button:disabled{opacity:.6;cursor:not-allowed}
 button.secondary{background:white;color:#172033;border-color:#cbd5e1}button.danger{background:#b91c1c;border-color:#b91c1c}
 button.edit{background:#0369a1;border-color:#0369a1}button.success{background:var(--green);border-color:var(--green)}
 button.sm{padding:6px 10px;font-size:13px}
-.tabs{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0}.tabs button{background:#e2e8f0;color:#1e293b;border-color:#e2e8f0}.tabs button.active{background:var(--blue);color:white}
+/* ---- side-mounted menu ---- */
+#appMain:not(.hidden){display:grid;grid-template-columns:230px minmax(0,1fr);gap:20px;max-width:1400px;align-items:start}
+.sidebar{position:sticky;top:12px;background:white;border:1px solid #e5eaf2;border-radius:14px;padding:12px;box-shadow:0 2px 8px #0f172a0a}
+.sidebar .side-title{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:4px 8px 10px}
+.tabs{display:flex;flex-direction:column;gap:4px}
+.tabs button{display:flex;align-items:center;gap:10px;width:100%;text-align:left;background:transparent;color:#1e293b;border-color:transparent;padding:11px 12px;font-weight:600}
+.tabs button .ico{width:22px;text-align:center;font-size:16px}
+.tabs button:hover{background:#eef2f9}
+.tabs button.active{background:var(--blue);color:white;border-color:var(--blue)}
+.content{min-width:0}
+.menu-btn{display:none;margin-bottom:12px}
+.side-backdrop{display:none}
+@media(max-width:800px){
+ #appMain:not(.hidden){display:block}
+ .menu-btn{display:inline-block}
+ .sidebar{position:fixed;z-index:90;top:0;left:0;bottom:0;width:250px;max-width:82vw;border-radius:0 14px 14px 0;transform:translateX(-105%);transition:transform .2s ease;overflow-y:auto}
+ body.menu-open .sidebar{transform:none}
+ body.menu-open .side-backdrop{display:block;position:fixed;inset:0;background:rgba(15,23,42,.45);z-index:80}
+}
 .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin:14px 0 20px}
 .card{background:white;padding:17px;border-radius:12px;box-shadow:0 2px 8px #0f172a0a;border:1px solid #e5eaf2}.card .label{color:var(--muted);font-size:13px}.card .value{font-size:24px;font-weight:700;margin-top:8px}
 .panel{background:white;border-radius:12px;padding:18px;border:1px solid #e5eaf2;margin-bottom:16px;overflow-x:auto}
@@ -54,11 +72,12 @@ tr.voided td:last-child{text-decoration:none}
  body{background:white}
  body.print-invoice > *:not(#invoiceArea){display:none!important}
  body.print-invoice #invoiceArea{display:block!important}
- body.print-report header,body.print-report .toolbar,body.print-report .tabs,body.print-report .notice,
+ body.print-report header,body.print-report .toolbar,body.print-report .tabs,body.print-report .sidebar,body.print-report .menu-btn,body.print-report .notice,
  body.print-report footer,body.print-report #authPanel,body.print-report .no-print{display:none!important}
  body.print-report .tabcontent{display:none!important}
  body.print-report #reports,body.print-report #reports.hidden{display:block!important}
  body.print-report .panel{border:none}
+ body.print-report #appMain{display:block!important}
 }
 .inv{font-family:Arial,"Noto Sans Bengali",sans-serif;max-width:380px;margin:0 auto;color:#000;font-size:13px}
 .inv h2{text-align:center;margin:0 0 2px;font-size:18px}.inv .c{text-align:center}
@@ -80,100 +99,105 @@ tr.voided td:last-child{text-decoration:none}
  <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
   <span id="userBadge" class="pill hidden"></span>
   <span class="pill">Supabase Auth</span>
-  <button id="langBtn" class="secondary" data-i18n-skip type="button" title="Language / ভাষা">English</button>
-  <button id="logoutBtn" class="secondary hidden">লগআউট</button>
+  <button id="logoutBtn" class="secondary hidden">Logout</button>
  </div>
 </header>
 
 <section id="authPanel" style="max-width:520px;margin:24px auto;background:white;padding:20px;border:1px solid #e5eaf2;border-radius:12px">
- <h2>লগইন</h2>
- <p class="small">নিজের ইউজার আইডি ও পাসওয়ার্ড দিয়ে লগইন করুন।</p>
+ <h2>Login</h2>
+ <p class="small">Log in with your own user ID and password.</p>
  <form id="loginForm">
   <div class="formgrid">
-   <input type="text" name="email" required placeholder="ইউজার আইডি" autocapitalize="none" autocomplete="username" spellcheck="false">
-   <input type="password" name="password" required placeholder="পাসওয়ার্ড">
+   <input type="text" name="email" required placeholder="User ID" autocapitalize="none" autocomplete="username" spellcheck="false">
+   <input type="password" name="password" required placeholder="Password">
   </div>
-  <button type="submit">লগইন</button>
+  <button type="submit">Login</button>
  </form>
  <p id="authStatus" class="small"></p>
 </section>
 
 <main id="appMain" class="hidden">
+ <aside class="sidebar" id="sidebar">
+  <div class="side-title">Menu</div>
+  <nav class="tabs">
+   <button class="active" data-tab="dashboard"><span class="ico">🏠</span>Dashboard</button>
+   <button data-tab="products"><span class="ico">📦</span>Products &amp; Stock</button>
+   <button data-tab="sales"><span class="ico">🛒</span>Sales</button>
+   <button data-tab="dues"><span class="ico">💰</span>Collect due</button>
+   <button data-tab="purchases"><span class="ico">🧾</span>Purchases</button>
+   <button data-tab="transfers" class="adminOnly"><span class="ico">🔁</span>Transfer</button>
+   <button data-tab="reports"><span class="ico">📊</span>Report</button>
+  </nav>
+ </aside>
+ <div class="side-backdrop" id="sideBackdrop"></div>
+ <div class="content">
+ <button type="button" class="secondary menu-btn" id="menuBtn">☰ Menu</button>
  <div class="notice">
-  <strong>সতর্কতা:</strong>
-  <span id="connectionStatus">Supabase সংযোগ প্রস্তুত হচ্ছে…</span>
-  · পণ্য যোগ/Edit/Delete/Import, ট্রান্সফার ও বিক্রি-ক্রয় বাতিল শুধুমাত্র Admin করতে পারবেন।
+  <strong>Notice:</strong>
+  <span id="connectionStatus">Preparing Supabase connection…</span>
+  · Only Admin can add, edit, delete or import products, transfer stock, and void sales or purchases.
  </div>
 
  <div class="toolbar">
-  <label for="branch">শাখা নির্বাচন:</label>
+  <label for="branch">Select branch:</label>
   <select id="branch"></select>
-  <button class="secondary adminOnly" id="addBranchBtn">+ শাখা যোগ করুন</button>
-  <button class="secondary" id="exportBtn">ডেটা Export (JSON)</button>
-  <button class="secondary" id="csvBtn">পণ্য CSV</button>
+  <button class="secondary adminOnly" id="addBranchBtn">+ Add branch</button>
+  <button class="secondary" id="exportBtn">Data Export (JSON)</button>
+  <button class="secondary" id="csvBtn">Product CSV</button>
  </div>
 
- <div class="tabs">
-  <button class="active" data-tab="dashboard">Dashboard</button>
-  <button data-tab="products">পণ্য ও স্টক</button>
-  <button data-tab="sales">বিক্রি</button>
-  <button data-tab="dues">বাকি আদায়</button>
-  <button data-tab="purchases">ক্রয়</button>
-  <button data-tab="transfers" class="adminOnly">ট্রান্সফার</button>
-  <button data-tab="reports">রিপোর্ট</button>
- </div>
 
  <!-- DASHBOARD -->
  <section id="dashboard" class="tabcontent">
   <div class="cards">
-   <div class="card"><div class="label">আজকের বিক্রি</div><div class="value" id="todaySales">৳0</div></div>
-   <div class="card"><div class="label">মোট বিক্রি</div><div class="value" id="totalSales">৳0</div></div>
-   <div class="card"><div class="label">স্টকে পণ্যের ইউনিট</div><div class="value" id="stockUnits">0</div></div>
-   <div class="card"><div class="label">মোট ক্রয়</div><div class="value" id="totalPurchases">৳0</div></div>
-   <div class="card"><div class="label">আনুমানিক লাভ*</div><div class="value" id="profit">৳0</div></div>
-   <div class="card"><div class="label">কম স্টক (৫ বা কম)</div><div class="value" id="lowStock">0</div></div>
-   <div class="card"><div class="label">মোট বাকি</div><div class="value dueval" id="totalDue">৳0</div></div>
+   <div class="card"><div class="label">Today's sales</div><div class="value" id="todaySales">৳0</div></div>
+   <div class="card"><div class="label">Total sales</div><div class="value" id="totalSales">৳0</div></div>
+   <div class="card"><div class="label">Units in stock</div><div class="value" id="stockUnits">0</div></div>
+   <div class="card"><div class="label">Total purchases</div><div class="value" id="totalPurchases">৳0</div></div>
+   <div class="card"><div class="label">Estimated profit*</div><div class="value" id="profit">৳0</div></div>
+   <div class="card"><div class="label">Low stock (5 or less)</div><div class="value" id="lowStock">0</div></div>
+   <div class="card"><div class="label">Total due</div><div class="value dueval" id="totalDue">৳0</div></div>
   </div>
   <div class="panel">
-   <h2>এই শাখার স্টক সারাংশ</h2>
+   <h2>Stock summary of this branch</h2>
    <div id="stockSummary"></div>
-   <p class="small">*আনুমানিক লাভ = (বিক্রয়মূল্য − ছাড়) − বিক্রি হওয়া পণ্যের রেকর্ডকৃত ক্রয়মূল্য। বাতিল বিক্রি বাদ। ভাড়া, বেতন ও অন্যান্য খরচ এতে অন্তর্ভুক্ত নয়।</p>
+   <p class="small">*Estimated profit = (Sale price − Discount) − recorded purchase price of sold items. Voided sales are excluded. Rent, salary and other expenses are not included.</p>
   </div>
  </section>
 
  <!-- PRODUCTS -->
  <section id="products" class="tabcontent hidden">
   <div class="panel adminOnly">
-   <h2>নতুন পণ্য যোগ করুন (একক)</h2>
+   <h2>Add new product (single)</h2>
    <form id="productForm">
     <div class="formgrid">
-     <input required name="name" placeholder="পণ্যের নাম / মডেল">
-     <input name="brand" placeholder="ব্র্যান্ড">
+     <input required name="name" placeholder="Product name / model">
+     <input name="brand" placeholder="Brand">
      <select name="category"><option>Mobile</option><option>Accessory</option><option>Other</option></select>
-     <input name="imei" placeholder="IMEI (একক ফোন হলে, তখন পরিমাণ ১)">
-     <input required name="cost" type="number" min="0" step="0.01" placeholder="ক্রয়মূল্য (৳)">
-     <input required name="price" type="number" min="0" step="0.01" placeholder="বিক্রয়মূল্য (৳)">
-     <input required name="qty" type="number" min="0" step="1" placeholder="পরিমাণ">
+     <input name="imei" placeholder="IMEI (for a single phone, quantity must be 1)">
+     <input required name="cost" type="number" min="0" step="0.01" placeholder="Purchase price (৳)">
+     <input required name="price" type="number" min="0" step="0.01" placeholder="Sale price (৳)">
+     <input required name="qty" type="number" min="0" step="1" placeholder="Quantity">
     </div>
-    <button type="submit">পণ্য সংরক্ষণ</button>
+    <button type="submit">Save product</button>
    </form>
   </div>
 
   <div class="panel adminOnly">
-   <h2>বাল্ক পণ্য এন্ট্রি (একসাথে অনেকগুলো)</h2>
-   <p class="small">নিচে সারি যোগ করে একসাথে অনেক পণ্য এন্ট্রি দিন। অথবা Excel/CSV ইমপোর্ট করুন।</p>
+   <h2>Bulk product entry (many at once)</h2>
+   <p class="small">Add rows below to enter many products at once, or use Excel/CSV import.</p>
    <div style="margin-bottom:12px">
-    <strong>ম্যানুয়াল বাল্ক টেবিল:</strong>
+    <strong>Manual bulk table:</strong>
     <table class="bulk-table" id="bulkTable">
      <thead>
-      <tr><th>পণ্যের নাম *</th><th>ব্র্যান্ড</th><th>ক্যাটাগরি</th><th>ক্রয়মূল্য *</th><th>বিক্রয়মূল্য *</th><th>পরিমাণ *</th><th></th></tr>
+      <tr><th>Product name *</th><th>Brand</th><th>Category</th><th>Purchase price *</th><th>Sale price *</th><th>Quantity *</th><th></th></tr>
      </thead>
      <tbody id="bulkBody"></tbody>
     </table>
     <div class="btn-row">
-     <button type="button" class="secondary" id="addBulkRowBtn">+ সারি যোগ</button>
-     <button type="button" class="success" id="saveBulkBtn">বাল্ক সংরক্ষণ</button>
-     <button type="button" class="secondary" id="clearBulkBtn">ক্লিয়ার</button>
+     <button type="button" class="secondary" id="addBulkRowBtn">+ Add row</button>
+     <button type="button" class="success" id="saveBulkBtn">Save bulk</button>
+     <button type="button" class="secondary" id="clearBulkBtn">Clear</button>
     </div>
     <p id="bulkStatus" class="small"></p>
    </div>
@@ -181,55 +205,55 @@ tr.voided td:last-child{text-decoration:none}
    <hr style="border:none;border-top:1px solid #e2e8f0;margin:18px 0">
 
    <div>
-    <strong>Excel / CSV থেকে Import:</strong>
-    <p class="small">কলাম: Branch Name (ঐচ্ছিক), Product Name, Brand Name, Purchase Price, Sale Price, Quantity, Product Category। ফাইলে একই নাম+ব্র্যান্ডের একাধিক সারি থাকলে Quantity যোগ হয়ে একটি সারি হবে।</p>
+    <strong>Import from Excel / CSV:</strong>
+    <p class="small">Columns: Branch Name (optional), Product Name, Brand Name, Purchase Price, Sale Price, Quantity, Product Category. If a file has the same name+brand in multiple rows, Quantity is summed into one row.</p>
     <div class="formgrid">
      <input id="excelFile" type="file" accept=".xlsx,.xls,.csv">
      <select id="importMode">
-      <option value="append">নতুন যোগ + পুরনো Quantity বাড়াও</option>
-      <option value="skip">শুধু নতুন পণ্য যোগ (পুরনো skip)</option>
-      <option value="replace">পুরনো মুছে নতুন দিয়ে replace</option>
+      <option value="append">Add new products and increase quantity of existing ones</option>
+      <option value="skip">Add new products only (skip existing)</option>
+      <option value="replace">Replace: delete old products first</option>
      </select>
-     <button type="button" id="importExcelBtn">Excel থেকে Import</button>
+     <button type="button" id="importExcelBtn">Import from Excel</button>
     </div>
-    <p id="importStatus" class="small">বর্তমানে নির্বাচিত শাখায় Import হবে।</p>
+    <p id="importStatus" class="small">Import will apply to the currently selected branch.</p>
    </div>
   </div>
 
   <div class="panel">
-   <h2>পণ্যের তালিকা</h2>
-   <input id="productFilter" placeholder="নাম / ব্র্যান্ড / IMEI দিয়ে খুঁজুন" style="width:100%;max-width:380px;margin-bottom:12px">
+   <h2>Product list</h2>
+   <input id="productFilter" placeholder="Search by name / brand / IMEI" style="width:100%;max-width:380px;margin-bottom:12px">
    <div id="productsTable"></div>
   </div>
  </section>
 
- <!-- SALES (কার্ট) -->
+ <!-- SALES (cart) -->
  <section id="sales" class="tabcontent hidden">
   <div class="panel">
-   <h2>নতুন বিক্রি</h2>
+   <h2>New sale</h2>
    <form id="saleForm">
-    <input id="saleSearch" placeholder="পণ্যের নাম বা IMEI লিখে খুঁজুন" style="width:100%;max-width:420px;margin-bottom:10px" autocomplete="off">
+    <input id="saleSearch" placeholder="Type product name or IMEI to search" style="width:100%;max-width:420px;margin-bottom:10px" autocomplete="off">
     <div class="formgrid">
      <select name="product" id="saleProduct"></select>
-     <input name="qty" id="saleQty" type="number" min="1" step="1" placeholder="পরিমাণ" value="1">
-     <input name="discount" id="saleDiscount" type="number" min="0" step="0.01" placeholder="এই পণ্যের ছাড় (৳, ঐচ্ছিক)">
-     <button type="button" class="success" id="addCartBtn">+ কার্টে যোগ করুন</button>
+     <input name="qty" id="saleQty" type="number" min="1" step="1" placeholder="Quantity" value="1">
+     <input name="discount" id="saleDiscount" type="number" min="0" step="0.01" placeholder="Discount for this product (৳, optional)">
+     <button type="button" class="success" id="addCartBtn">+ Add to cart</button>
     </div>
     <div id="cartBox" class="cart-wrap"></div>
     <div class="formgrid">
-     <input name="customer" placeholder="কাস্টমারের নাম (ঐচ্ছিক)">
-     <input name="phone" type="tel" placeholder="ফোন নম্বর (ঐচ্ছিক)">
+     <input name="customer" placeholder="Customer name (optional)">
+     <input name="phone" type="tel" placeholder="Phone number (optional)">
      <select name="payment"><option>Cash</option><option>bKash</option><option>Nagad</option><option>Bank</option><option>Card</option><option>Other</option></select>
-     <input name="paid" id="salePaid" type="number" min="0" step="0.01" placeholder="এখন কত পেলেন (৳) — ফাঁকা হলে পুরো টাকা">
+     <input name="paid" id="salePaid" type="number" min="0" step="0.01" placeholder="Received now (৳) — leave blank for full amount">
     </div>
-    <div class="preview" id="salePreview">কার্টে পণ্য যোগ করুন।</div>
-    <button type="submit">বিক্রি সংরক্ষণ</button>
+    <div class="preview" id="salePreview">Add products to the cart.</div>
+    <button type="submit">Save sale</button>
    </form>
-   <p class="small">দাম সার্ভার থেকে নেওয়া হয়। একটি কার্টে অনেক পণ্য দিলে একটাই ইনভয়েস হবে। পুরো টাকা না পেলে বাকি হিসেবে জমা থাকবে এবং <strong>বাকি আদায়</strong> ট্যাব থেকে আদায় করা যাবে।</p>
+   <p class="small">Prices are taken from the server. Several products in one cart produce a single invoice. If the full amount is not received, the remainder is saved as due and can be collected from the <strong>Collect due</strong> tab.</p>
   </div>
   <div class="panel">
-   <h2>বিক্রির তালিকা (নতুন আগে)</h2>
-   <input id="salesFilter" placeholder="পণ্য / IMEI / কাস্টমার / ফোন দিয়ে খুঁজুন" style="width:100%;max-width:380px;margin-bottom:12px">
+   <h2>Sales list (newest first)</h2>
+   <input id="salesFilter" placeholder="Search by product / IMEI / customer / phone" style="width:100%;max-width:380px;margin-bottom:12px">
    <div id="historyNote" class="small" style="margin-bottom:10px"></div>
    <div id="salesTable"></div>
   </div>
@@ -238,16 +262,16 @@ tr.voided td:last-child{text-decoration:none}
  <!-- DUES -->
  <section id="dues" class="tabcontent hidden">
   <div class="cards">
-   <div class="card"><div class="label">বর্তমান মোট বাকি</div><div class="value dueval" id="duesTotal">৳0</div></div>
-   <div class="card"><div class="label">বাকিওয়ালা বিক্রি</div><div class="value" id="duesCount">0</div></div>
+   <div class="card"><div class="label">Current total due</div><div class="value dueval" id="duesTotal">৳0</div></div>
+   <div class="card"><div class="label">Sales with due</div><div class="value" id="duesCount">0</div></div>
   </div>
   <div class="panel">
-   <h2>বাকিওয়ালা বিক্রি</h2>
-   <input id="duesFilter" placeholder="কাস্টমার / ফোন / ইনভয়েস দিয়ে খুঁজুন" style="width:100%;max-width:380px;margin-bottom:12px">
+   <h2>Sales with due</h2>
+   <input id="duesFilter" placeholder="Search by customer / phone / invoice" style="width:100%;max-width:380px;margin-bottom:12px">
    <div id="duesTable"></div>
   </div>
   <div class="panel">
-   <h2>গ্রাহক অনুযায়ী বাকি</h2>
+   <h2>Due by customer</h2>
    <div id="duesByCustomer"></div>
   </div>
  </section>
@@ -255,75 +279,76 @@ tr.voided td:last-child{text-decoration:none}
   <!-- PURCHASES -->
  <section id="purchases" class="tabcontent hidden">
   <div class="panel">
-   <h2>নতুন ক্রয় / স্টক যোগ</h2>
+   <h2>New purchase / Add stock</h2>
    <form id="purchaseForm">
     <div class="formgrid">
      <select required name="product" id="purchaseProduct"></select>
-     <input required name="qty" type="number" min="1" step="1" placeholder="পরিমাণ">
-     <input required name="cost" type="number" min="0" step="0.01" placeholder="প্রতি ইউনিট ক্রয়মূল্য (৳)">
-     <input name="supplier" placeholder="সাপ্লায়ারের নাম (ঐচ্ছিক)">
+     <input required name="qty" type="number" min="1" step="1" placeholder="Quantity">
+     <input required name="cost" type="number" min="0" step="0.01" placeholder="Purchase price per unit (৳)">
+     <input name="supplier" placeholder="Supplier name (optional)">
     </div>
-    <button type="submit">ক্রয় সংরক্ষণ</button>
+    <button type="submit">Save purchase</button>
    </form>
   </div>
-  <div class="panel"><h2>ক্রয়ের তালিকা (নতুন আগে)</h2><div id="purchasesTable"></div></div>
+  <div class="panel"><h2>Purchase list (newest first)</h2><div id="purchasesTable"></div></div>
  </section>
 
  <!-- TRANSFERS (Admin) -->
  <section id="transfers" class="tabcontent hidden">
   <div class="panel">
-   <h2>শাখা থেকে শাখায় পণ্য ট্রান্সফার</h2>
+   <h2>Transfer products from branch to branch</h2>
    <form id="transferForm">
     <div class="formgrid">
      <select required name="product" id="transferProduct"></select>
-     <input required name="qty" id="transferQty" type="number" min="1" step="1" placeholder="পরিমাণ">
+     <input required name="qty" id="transferQty" type="number" min="1" step="1" placeholder="Quantity">
      <select required name="to" id="transferTo"></select>
-     <input name="note" placeholder="নোট (ঐচ্ছিক)">
+     <input name="note" placeholder="Note (optional)">
     </div>
-    <p class="small">উৎস শাখা = উপরে নির্বাচিত শাখা। IMEI-ওয়ালা ফোন পুরোটাই নতুন শাখায় চলে যায়।</p>
-    <button type="submit">ট্রান্সফার করুন</button>
+    <p class="small">Source branch = branch selected above. IMEI-tracked phones move entirely to the new branch.</p>
+    <button type="submit">Transfer</button>
    </form>
   </div>
-  <div class="panel"><h2>ট্রান্সফারের ইতিহাস (এই শাখার)</h2><div id="transfersTable"></div></div>
+  <div class="panel"><h2>Transfer history (this branch)</h2><div id="transfersTable"></div></div>
  </section>
 
  <!-- REPORTS -->
  <section id="reports" class="tabcontent hidden">
   <div class="panel">
-   <h2>রিপোর্ট</h2>
+   <h2>Report</h2>
    <div class="rangebar no-print">
-    <label>থেকে <input type="date" id="repFrom"></label>
-    <label>পর্যন্ত <input type="date" id="repTo"></label>
-    <select id="repGroup"><option value="day">দৈনিক</option><option value="month">মাসিক</option></select>
-    <button class="secondary sm" data-range="today">আজ</button>
-    <button class="secondary sm" data-range="month">এই মাস</button>
-    <button class="secondary sm" data-range="lastmonth">গত মাস</button>
-    <button class="secondary sm" data-range="all">সব</button>
+    <label>From <input type="date" id="repFrom"></label>
+    <label>To <input type="date" id="repTo"></label>
+    <select id="repGroup"><option value="day">Daily</option><option value="month">Monthly</option></select>
+    <button class="secondary sm" data-range="today">Today</button>
+    <button class="secondary sm" data-range="month">This month</button>
+    <button class="secondary sm" data-range="lastmonth">Last month</button>
+    <button class="secondary sm" data-range="all">All</button>
    </div>
    <div id="reportSummary"></div>
-   <button id="printBtn" class="no-print">রিপোর্ট Print করুন</button>
+   <button id="printBtn" class="no-print">Print report</button>
   </div>
  </section>
+ </div>
 </main>
 
 <!-- EDIT PRODUCT MODAL -->
 <div id="editModal" class="modal-overlay hidden">
  <div class="modal">
-  <h3>পণ্য সম্পাদনা</h3>
+  <h3>Edit product</h3>
   <form id="editForm">
    <input type="hidden" name="id">
    <div class="formgrid">
-    <input required name="name" placeholder="পণ্যের নাম / মডেল">
-    <input name="brand" placeholder="ব্র্যান্ড">
+    <input required name="name" placeholder="Product name / model">
+    <input name="brand" placeholder="Brand">
     <select name="category"><option>Mobile</option><option>Accessory</option><option>Other</option></select>
     <input name="imei" placeholder="IMEI">
-    <input required name="cost" type="number" min="0" step="0.01" placeholder="ক্রয়মূল্য (৳)">
-    <input required name="price" type="number" min="0" step="0.01" placeholder="বিক্রয়মূল্য (৳)">
-    <input required name="qty" type="number" min="0" step="1" placeholder="পরিমাণ">
+    <input required name="cost" type="number" min="0" step="0.01" placeholder="Purchase price (৳)">
+    <input required name="price" type="number" min="0" step="0.01" placeholder="Sale price (৳)">
+    <input required name="qty" type="number" min="0" step="1" placeholder="Quantity">
    </div>
    <div class="modal-actions">
-    <button type="button" class="secondary" id="cancelEditBtn">বাতিল</button>
-    <button type="submit">আপডেট করুন</button>
+    <button type="button" class="secondary" id="cancelEditBtn">Cancel</button>
+    <button type="submit">Update</button>
    </div>
   </form>
  </div>
@@ -332,17 +357,17 @@ tr.voided td:last-child{text-decoration:none}
 <!-- PAY (DUE) MODAL -->
 <div id="payModal" class="modal-overlay hidden">
  <div class="modal">
-  <h3>বাকির বিস্তারিত</h3>
+  <h3>Due details</h3>
   <div class="preview" id="payInfo"></div>
   <form id="payForm">
    <div class="formgrid">
-    <input required name="amount" type="number" min="0.01" step="0.01" placeholder="কত টাকা পেলেন">
+    <input required name="amount" type="number" min="0.01" step="0.01" placeholder="Amount received">
     <select name="payment"><option>Cash</option><option>bKash</option><option>Nagad</option><option>Bank</option><option>Card</option><option>Other</option></select>
-    <input name="note" placeholder="নোট (ঐচ্ছিক)">
+    <input name="note" placeholder="Note (optional)">
    </div>
    <div class="modal-actions">
-    <button type="button" class="secondary" id="cancelPayBtn">বাতিল</button>
-    <button type="submit">জমা নিন</button>
+    <button type="button" class="secondary" id="cancelPayBtn">Cancel</button>
+    <button type="submit">Receive payment</button>
    </div>
   </form>
  </div>
@@ -350,7 +375,7 @@ tr.voided td:last-child{text-decoration:none}
 
 <div id="invoiceArea"></div>
 
-<footer>Sheba Brand Shop Cafe · Version 1.7 · Multi-User · ইনভয়েস · ট্রান্সফার</footer>
+<footer>Sheba Brand Shop Cafe · Version 1.7 · Multi-User · Invoice · Transfer</footer>
 
 <script>
 // ========== SUPABASE CONFIG ==========
@@ -358,12 +383,12 @@ const SUPABASE_URL = 'https://mzmzpijqxxqkfwkthopt.supabase.co';
 const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_DigWtOCdFA6wZlEDnh1rFQ_Qlt2JmRk';
 
 if (!window.supabase || !window.supabase.createClient) {
-  document.getElementById('authStatus').textContent = 'Supabase লাইব্রেরি লোড হয়নি। ইন্টারনেট সংযোগ পরীক্ষা করে পেজ রিফ্রেশ করুন।';
+  document.getElementById('authStatus').textContent = 'Supabase library failed to load. Check your internet connection and refresh the page.';
   throw new Error('Supabase JS library unavailable');
 }
 const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
 
-// ইউজার আইডি (যেমন "vivo") -> Supabase-এর জন্য ইমেইল ("vivo@sheba.com")
+// User ID (e.g. "vivo") -> Supabase-email for ("vivo@sheba.com")
 const LOGIN_DOMAIN = 'sheba.com';
 const toLoginEmail = v => {
   const s = String(v||'').trim().toLowerCase();
@@ -409,7 +434,7 @@ function isAdmin(){ return !!currentUser && currentUser.role === 'admin'; }
 function branchName(id){ const b = branchRows.find(x => x.id === id); return b ? b.name : '—'; }
 
 function table(rows, headers){
-  if(!rows.length) return '<div class="empty">এখনো কোনো তথ্য নেই।</div>';
+  if(!rows.length) return '<div class="empty">No data yet.</div>';
   return '<table><thead><tr>' + headers.map(h=>'<th>'+h+'</th>').join('') + '</tr></thead><tbody>' + rows.join('') + '</tbody></table>';
 }
 
@@ -446,7 +471,7 @@ async function setSessionUI(){
   logoutBtn.classList.remove('hidden');
   userBadge.classList.remove('hidden');
   document.querySelectorAll('.adminOnly').forEach(el => el.classList.toggle('hidden', !isAdmin()));
-  document.getElementById('connectionStatus').textContent = '✅ লগইন হয়েছে';
+  document.getElementById('connectionStatus').textContent = '✅ Logged in';
   await loadBranchesFromSupabase();
 }
 
@@ -457,10 +482,10 @@ async function loadUserProfile(user){
       .select('id, role, branch_id, full_name').eq('id', user.id).maybeSingle();
     if(error) throw error;
 
-    if(!data){ pendingDenyMessage = 'এই অ্যাকাউন্টের কোনো প্রোফাইল নেই। অ্যাডমিনকে জানান।'; return false; }
+    if(!data){ pendingDenyMessage = 'This account has no profile. Please inform the admin.'; return false; }
     const role = data.role === 'admin' ? 'admin' : (data.role === 'manager' ? 'manager' : null);
-    if(!role){ pendingDenyMessage = 'এই অ্যাকাউন্টের রোল সঠিক নয়। অ্যাডমিনকে জানান।'; return false; }
-    if(role === 'manager' && !data.branch_id){ pendingDenyMessage = 'এই Manager-এর কোনো শাখা ঠিক করা নেই। অ্যাডমিনকে জানান।'; return false; }
+    if(!role){ pendingDenyMessage = 'This account has an invalid role. Please inform the admin.'; return false; }
+    if(role === 'manager' && !data.branch_id){ pendingDenyMessage = 'This manager has no branch assigned. Please inform the admin.'; return false; }
 
     currentUser = { id: user.id, email: user.email, role, branch_id: data.branch_id || null, full_name: data.full_name || user.email };
     userBadge.textContent = (role === 'admin' ? 'Admin: ' : 'Manager: ') + currentUser.full_name;
@@ -468,7 +493,7 @@ async function loadUserProfile(user){
     return true;
   } catch(err){
     console.error('Profile load failed:', err);
-    pendingDenyMessage = 'প্রোফাইল লোড করা যায়নি: ' + (err.message || 'আবার চেষ্টা করুন');
+    pendingDenyMessage = 'Could not load profile: ' + (err.message || 'Please try again');
     return false;
   }
 }
@@ -479,20 +504,20 @@ document.getElementById('loginForm').addEventListener('submit', async e => {
   const f = new FormData(form);
   const submit = form.querySelector('button[type=submit]');
   submit.disabled = true;
-  authStatus.textContent = 'লগইন হচ্ছে…';
+  authStatus.textContent = 'Logging in…';
   pendingDenyMessage = '';
   try {
     const { data, error } = await sb.auth.signInWithPassword({
       email: toLoginEmail(f.get('email')),
       password: String(f.get('password')||'')
     });
-    if(error){ authStatus.textContent = 'লগইন ব্যর্থ: ' + error.message; return; }
-    if(!data.session){ authStatus.textContent = 'লগইন সম্পন্ন হয়নি।'; return; }
+    if(error){ authStatus.textContent = 'Login failed: ' + error.message; return; }
+    if(!data.session){ authStatus.textContent = 'Login was not completed.'; return; }
     form.reset();
     await setSessionUI();
     authStatus.textContent = pendingDenyMessage || '';
   } catch(err){
-    authStatus.textContent = 'সংযোগ সমস্যা: ' + (err.message || 'ইন্টারনেট পরীক্ষা করুন');
+    authStatus.textContent = 'Connection problem: ' + (err.message || 'Check your internet');
   } finally { submit.disabled = false; }
 });
 
@@ -505,7 +530,7 @@ async function loadBranchesFromSupabase(){
   try {
     const { data: rows, error } = await sb.from('branches').select('id,name').order('name', { ascending: true });
     if(error) throw error;
-    if(!Array.isArray(rows) || rows.length === 0) throw new Error('কোনো শাখা পাওয়া যায়নি');
+    if(!Array.isArray(rows) || rows.length === 0) throw new Error('No branches found');
 
     branchRows = rows;
     state.branches = rows.map(r => r.name);
@@ -513,7 +538,7 @@ async function loadBranchesFromSupabase(){
     let allowed = state.branches;
     if(!isAdmin()){
       const myBranch = rows.find(r => r.id === currentUser.branch_id);
-      if(!myBranch) throw new Error('আপনার শাখা পাওয়া যায়নি');
+      if(!myBranch) throw new Error('Your branch was not found');
       allowed = [myBranch.name];
       currentUser.branch_name = myBranch.name;
     }
@@ -523,11 +548,11 @@ async function loadBranchesFromSupabase(){
     select.innerHTML = allowed.map(b => `<option>${esc(b)}</option>`).join('');
     select.value = allowed.includes(old) ? old : (allowed[0] || '');
 
-    status.textContent = '✅ ' + allowed.length + 'টি শাখা লোড · ' + currentUser.role;
+    status.textContent = '✅ ' + allowed.length + (allowed.length === 1 ? ' branch' : ' branches') + ' loaded · ' + currentUser.role;
     render();
     await loadProductsOnline();
   } catch(err){
-    status.textContent = '⚠️ অনলাইন শাখা লোড হয়নি: ' + (err.message || '');
+    status.textContent = '⚠️ Online branches could not be loaded: ' + (err.message || '');
     console.error('Branch load failed:', err);
   }
 }
@@ -535,27 +560,27 @@ async function loadBranchesFromSupabase(){
 document.getElementById('branch').addEventListener('change', () => { cart = []; loadProductsOnline(); });
 
 document.getElementById('addBranchBtn').addEventListener('click', async () => {
-  if(!isAdmin()){ alert('শুধু Admin শাখা যোগ করতে পারেন।'); return; }
-  const name = prompt('নতুন শাখার নাম লিখুন:');
+  if(!isAdmin()){ alert('Only Admin can add branches.'); return; }
+  const name = prompt('Enter the new branch name:');
   if(!name || !name.trim()) return;
   try {
     const { error } = await sb.from('branches').insert({ name: name.trim() });
     if(error) throw error;
     await loadBranchesFromSupabase();
-    alert('শাখা যোগ হয়েছে।');
-  } catch(err){ alert('শাখা যোগ ব্যর্থ: ' + (err.message || '')); }
+    alert('Branch added.');
+  } catch(err){ alert('Failed to add branch: ' + (err.message || '')); }
 });
 
 // ========== LOAD DATA ==========
 let loadSeq = 0;
 const HISTORY_DAYS = 90;
 function historyCutoff(){ return historyAll ? null : new Date(Date.now() - HISTORY_DAYS * 86400000).toISOString(); }
-const nm = s => '<span data-i18n-skip>' + esc(s) + '</span>';
+const nm = s => esc(s);
 const invLabel = (no, id) => no ? 'INV-' + String(no).padStart(6, '0') : 'INV-' + String(id).slice(0, 8).toUpperCase();
 function friendlyError(err){
   const m = String((err && err.message) || err || '');
-  if(/imei/i.test(m) && /duplicate key|unique/i.test(m)) return 'এই IMEI আগে থেকেই আছে (অন্য শাখাতেও থাকতে পারে)।';
-  if(/row-level security|permission denied/i.test(m)) return 'এই কাজের অনুমতি আপনার নেই।';
+  if(/imei/i.test(m) && /duplicate key|unique/i.test(m)) return 'This IMEI already exists (it may be in another branch).';
+  if(/row-level security|permission denied/i.test(m)) return 'You do not have permission for this action.';
   return m;
 }
 async function rpcData(name, args){
@@ -582,7 +607,7 @@ async function loadProductsOnline(){
     }));
     await loadTransactionsOnline(br, seq);
   } catch(err){
-    document.getElementById('connectionStatus').textContent = '⚠️ পণ্য লোড হয়নি: ' + (err.message || '');
+    document.getElementById('connectionStatus').textContent = '⚠️ Products failed to load: ' + (err.message || '');
   }
 }
 
@@ -592,7 +617,7 @@ async function loadTransactionsOnline(br, seq){
   const cut = historyCutoff();
   const win = q => cut ? q.gte('created_at', cut) : q;
 
-  // একটি টেবিল ব্যর্থ হলেও বাকিগুলো দেখানো যাবে (allSettled)
+  // If one table fails, the others can still be shown (allSettled)
   const jobs = await Promise.allSettled([
     fetchAll(() => win(sb.from('sales')
       .select('id,branch_id,product_id,quantity,unit_price,unit_cost,discount,paid_amount,payment_method,customer_name,customer_phone,product_imei,product_name,created_at,voided,void_reason,invoice_id')
@@ -620,8 +645,8 @@ async function loadTransactionsOnline(br, seq){
   if(failed.length){
     const r = failed[0].reason;
     document.getElementById('connectionStatus').textContent =
-      '⚠️ কিছু ডেটা লোড হয়নি: ' + ((r && r.message) || String(r)) +
-      ' — v1.7 SQL (Sheba_Supabase_v1.7_Upgrade.sql) চালানো হয়েছে কিনা দেখুন।';
+      '⚠️ Some data failed to load: ' + ((r && r.message) || String(r)) +
+      ' — check whether the v1.7 SQL (Sheba_Supabase_v1.7_Upgrade.sql) has been run.';
   }
 
   const sData = val(0) || [], pData = val(1) || [], payData = val(2) || [], trData = val(3) || [], invData = val(4) || [];
@@ -651,7 +676,7 @@ async function loadTransactionsOnline(br, seq){
     const due = Math.max(0, r2(total - paidInitial - (paySum.get(x.id) || 0)));
     return {
       id: x.id, branch: br.name, productId: x.product_id,
-      name: x.product_name || p.name || 'পণ্য মুছে ফেলা হয়েছে',
+      name: x.product_name || p.name || 'Product deleted',
       imei: x.product_imei || '',
       qty, unitPrice: price, discount, total, paidInitial, due,
       profit: r2(total - qty * cost),
@@ -668,7 +693,7 @@ async function loadTransactionsOnline(br, seq){
     const qty = Number(x.quantity), cost = Number(x.unit_cost);
     return {
       id: x.id, branch: br.name, productId: x.product_id,
-      name: p.name || 'পণ্য মুছে ফেলা হয়েছে',
+      name: p.name || 'Product deleted',
       qty, cost, total: r2(qty * cost),
       supplier: x.supplier_name || '',
       date: dateOf(x.created_at), createdAt: x.created_at,
@@ -693,15 +718,15 @@ function renderProducts(){
   if(q) ps = ps.filter(p => [p.name, p.brand, p.imei].join(' ').toLowerCase().includes(q));
   const canEdit = isAdmin();
   const headers = canEdit
-    ? ['পণ্য','ব্র্যান্ড','ধরন','IMEI','ক্রয়মূল্য','বিক্রয়মূল্য','স্টক','অ্যাকশন']
-    : ['পণ্য','ব্র্যান্ড','ধরন','IMEI','ক্রয়মূল্য','বিক্রয়মূল্য','স্টক'];
+    ? ['Product','Brand','Type','IMEI','Purchase price','Sale price','Stock','Action']
+    : ['Product','Brand','Type','IMEI','Purchase price','Sale price','Stock'];
 
   document.getElementById('productsTable').innerHTML = table(
     ps.map(p => {
       const actions = canEdit
         ? `<td style="white-space:nowrap">
             <button class="edit sm" onclick="openEditProduct('${esc(p.id)}')">Edit</button>
-            <button class="danger sm" onclick="deleteProduct('${esc(p.id)}')">মুছুন</button>
+            <button class="danger sm" onclick="deleteProduct('${esc(p.id)}')">Delete</button>
           </td>` : '';
       return `<tr>
         <td>${nm(p.name)}</td><td>${nm(p.brand)}</td><td>${esc(p.category)}</td>
@@ -723,30 +748,30 @@ function renderSales(){
   state.sales.forEach(s => { if(s.invoiceId && !s.voided) liveCount.set(s.invoiceId, (liveCount.get(s.invoiceId) || 0) + 1); });
 
   const rows = shown.map(s => {
-    let btns = `<button class="secondary sm" onclick="printInvoice('${esc(s.id)}')">ইনভয়েস</button>`;
+    let btns = `<button class="secondary sm" onclick="printInvoice('${esc(s.id)}')">Invoice</button>`;
     if(isAdmin() && !s.voided){
-      btns += ` <button class="danger sm" onclick="voidSale('${esc(s.id)}')">বাতিল</button>`;
+      btns += ` <button class="danger sm" onclick="voidSale('${esc(s.id)}')">Void</button>`;
       if(s.invoiceId && (liveCount.get(s.invoiceId) || 0) > 1){
-        btns += ` <button class="danger sm" onclick="voidInvoice('${esc(s.invoiceId)}')">ইনভয়েস বাতিল</button>`;
+        btns += ` <button class="danger sm" onclick="voidInvoice('${esc(s.invoiceId)}')">Void invoice</button>`;
       }
     }
     return `<tr class="${s.voided ? 'voided' : ''}">
       <td>${esc(s.date)}</td>
       <td>${esc(invLabel(s.invoiceNo, s.id))}</td>
-      <td>${nm(s.name)}${s.voided ? ' <span class="pill void">বাতিল</span>' : ''}</td>
+      <td>${nm(s.name)}${s.voided ? ' <span class="pill void">Void</span>' : ''}</td>
       <td>${esc(s.imei || '—')}</td><td>${s.qty}</td>
-      <td>${money(s.total)}${s.discount > 0 ? '<div class="small">ছাড়: ' + money(s.discount) + '</div>' : ''}${(!s.voided && s.due > 0) ? '<div class="small due">বাকি: ' + money(s.due) + '</div>' : ''}</td>
+      <td>${money(s.total)}${s.discount > 0 ? '<div class="small">Discount: ' + money(s.discount) + '</div>' : ''}${(!s.voided && s.due > 0) ? '<div class="small due">Due: ' + money(s.due) + '</div>' : ''}</td>
       <td>${esc(s.payment)}</td>
       <td>${s.customer ? nm(s.customer) : '—'}${s.phone ? '<div class="small">' + esc(s.phone) + '</div>' : ''}</td>
       <td style="white-space:nowrap">${btns}</td></tr>`;
   });
-  let html = table(rows, ['তারিখ','ইনভয়েস','পণ্য','IMEI','পরিমাণ','মোট','পেমেন্ট','কাস্টমার','অ্যাকশন']);
+  let html = table(rows, ['Date','Invoice','Product','IMEI','Quantity','Total','Payment','Customer','Action']);
   if(list.length > salesLimit){
-    html += `<div class="btn-row"><button class="secondary" onclick="salesLimit+=100;renderSales()">আরও ১০০টি দেখান (মোট ${list.length}টির মধ্যে ${salesLimit}টি দেখানো হচ্ছে)</button></div>`;
+    html += `<div class="btn-row"><button class="secondary" onclick="salesLimit+=100;renderSales()">Show 100 more (showing ${salesLimit} of ${list.length})</button></div>`;
   }
   document.getElementById('salesTable').innerHTML = html;
   document.getElementById('historyNote').innerHTML = historyAll ? '' :
-    `শুধু শেষ ${HISTORY_DAYS} দিনের বিক্রি দেখানো হচ্ছে। <button class="secondary sm" type="button" onclick="loadFullHistory()">সব ইতিহাস লোড করুন</button>`;
+    `Showing sales from the last ${HISTORY_DAYS} days only. <button class="secondary sm" type="button" onclick="loadFullHistory()">Load full history</button>`;
 }
 
 function renderDues(){
@@ -763,8 +788,8 @@ function renderDues(){
     <td>${d.customer ? nm(d.customer) : '—'}${d.phone ? '<div class="small">' + esc(d.phone) + '</div>' : ''}</td>
     <td>${nm(d.items)}</td>
     <td>${money(d.total)}</td><td>${money(d.paid)}</td><td class="due">${money(d.due)}</td>
-    <td><button class="success sm" onclick="openPay('${esc(d.key)}')">জমা নিন</button></td></tr>`);
-  document.getElementById('duesTable').innerHTML = table(rows, ['তারিখ','ইনভয়েস','কাস্টমার','পণ্য','মোট','পরিশোধিত','বাকি','অ্যাকশন']);
+    <td><button class="success sm" onclick="openPay('${esc(d.key)}')">Receive payment</button></td></tr>`);
+  document.getElementById('duesTable').innerHTML = table(rows, ['Date','Invoice','Customer','Product','Total','Paid','Due','Action']);
 
   const byCust = new Map();
   state.dues.forEach(d => {
@@ -775,17 +800,17 @@ function renderDues(){
   });
   const custRows = Array.from(byCust.values()).sort((a, b) => b.due - a.due)
     .map(c => `<tr><td>${nm(c.name)}</td><td>${esc(c.phone || '—')}</td><td>${c.count}</td><td class="due">${money(c.due)}</td></tr>`);
-  document.getElementById('duesByCustomer').innerHTML = table(custRows, ['কাস্টমার','ফোন নম্বর','বিক্রির সংখ্যা','বাকি']);
+  document.getElementById('duesByCustomer').innerHTML = table(custRows, ['Customer','Phone number','Number of sales','Due']);
 }
 document.getElementById('duesFilter').addEventListener('input', renderDues);
 
 function renderPurchases(){
   const rows = state.purchases.filter(s => s.branch === branch())
     .map(s => `<tr class="${s.voided ? 'voided' : ''}">
-      <td>${esc(s.date)}</td><td>${nm(s.name)}${s.voided ? ' <span class="pill void">বাতিল</span>' : ''}</td>
+      <td>${esc(s.date)}</td><td>${nm(s.name)}${s.voided ? ' <span class="pill void">Void</span>' : ''}</td>
       <td>${s.qty}</td><td>${money(s.cost)}</td><td>${money(s.total)}</td><td>${s.supplier ? nm(s.supplier) : '—'}</td>
-      <td>${isAdmin() && !s.voided ? `<button class="danger sm" onclick="voidPurchase('${esc(s.id)}')">বাতিল</button>` : ''}</td></tr>`);
-  document.getElementById('purchasesTable').innerHTML = table(rows, ['তারিখ','পণ্য','পরিমাণ','প্রতি ইউনিট','মোট','সাপ্লায়ার','']);
+      <td>${isAdmin() && !s.voided ? `<button class="danger sm" onclick="voidPurchase('${esc(s.id)}')">Void</button>` : ''}</td></tr>`);
+  document.getElementById('purchasesTable').innerHTML = table(rows, ['Date','Product','Quantity','Per unit','Total','Supplier','']);
 }
 
 function renderTransfers(){
@@ -794,8 +819,8 @@ function renderTransfers(){
   const sel = document.getElementById('transferProduct');
   const old = sel.value;
   sel.innerHTML = ps.length
-    ? ps.map(p => `<option value="${esc(p.id)}">${esc(p.name)}${p.imei ? ' · IMEI ' + esc(p.imei) : ''} (স্টক: ${p.qty})</option>`).join('')
-    : '<option value="">স্টকে পণ্য নেই</option>';
+    ? ps.map(p => `<option value="${esc(p.id)}">${esc(p.name)}${p.imei ? ' · IMEI ' + esc(p.imei) : ''} (Stock: ${p.qty})</option>`).join('')
+    : '<option value="">No products in stock</option>';
   if(ps.some(p => p.id === old)) sel.value = old;
 
   const cur = currentBranchRow();
@@ -807,28 +832,28 @@ function renderTransfers(){
 
   const rows = state.transfers.map(t => `<tr><td>${esc(t.date)}</td><td>${nm(t.name)}</td><td>${esc(t.imei || '—')}</td>
     <td>${t.qty}</td><td>${esc(branchName(t.from))} → ${esc(branchName(t.to))}</td><td>${esc(t.note || '—')}</td></tr>`);
-  document.getElementById('transfersTable').innerHTML = table(rows, ['তারিখ','পণ্য','IMEI','পরিমাণ','কোথা থেকে → কোথায়','নোট']);
+  document.getElementById('transfersTable').innerHTML = table(rows, ['Date','Product','IMEI','Quantity','From → To','Note']);
   syncTransferQty();
 }
 
 function updateSelects(){
   const ps = currentProducts();
-  // বিক্রির তালিকা: শুধু স্টক আছে এমন পণ্য, সার্চ বক্স অনুযায়ী ছাঁকা
+  // Sales list: only products in stock, filtered by search box
   const q = (document.getElementById('saleSearch').value || '').trim().toLowerCase();
   let sellable = ps.filter(p => p.qty > 0);
   if(q) sellable = sellable.filter(p => [p.name, p.brand, p.imei].join(' ').toLowerCase().includes(q));
   const sEl = document.getElementById('saleProduct');
   const oldS = sEl.value;
   sEl.innerHTML = sellable.length
-    ? sellable.map(p => `<option value="${esc(p.id)}">${esc(p.name)}${p.imei ? ' · IMEI ' + esc(p.imei) : ''} (স্টক: ${p.qty}) — ${money(p.price)}</option>`).join('')
-    : '<option value="">' + (q ? 'কিছু পাওয়া যায়নি' : 'স্টকে পণ্য নেই') + '</option>';
+    ? sellable.map(p => `<option value="${esc(p.id)}">${esc(p.name)}${p.imei ? ' · IMEI ' + esc(p.imei) : ''} (Stock: ${p.qty}) — ${money(p.price)}</option>`).join('')
+    : '<option value="">' + (q ? 'Nothing found' : 'No products in stock') + '</option>';
   if(sellable.some(p => p.id === oldS)) sEl.value = oldS;
 
   const pEl = document.getElementById('purchaseProduct');
   const oldP = pEl.value;
   pEl.innerHTML = ps.length
-    ? ps.map(p => `<option value="${esc(p.id)}">${esc(p.name)} (স্টক: ${p.qty})</option>`).join('')
-    : '<option value="">আগে পণ্য যোগ করুন</option>';
+    ? ps.map(p => `<option value="${esc(p.id)}">${esc(p.name)} (Stock: ${p.qty})</option>`).join('')
+    : '<option value="">Add a product first</option>';
   if(ps.some(p => p.id === oldP)) pEl.value = oldP;
 
   syncSaleQty();
@@ -845,7 +870,7 @@ function render(){
   const t = today();
 
   const todayTotal = r2(ss.filter(s => s.date === t).reduce((a,s) => a + s.total, 0));
-  const T = state.totals;  // সারাজীবনের মোট (সার্ভার থেকে); না পেলে লোড-করা ডেটা থেকে
+  const T = state.totals; // Lifetime totals from the server; fall back to the loaded data if unavailable
   const salesTotal = T ? r2(T.sales) : r2(ss.reduce((a,s) => a + s.total, 0));
   const purchTotal = T ? r2(T.purchases) : r2(purs.reduce((a,s) => a + s.total, 0));
   const units = ps.reduce((a,p) => a + p.qty, 0);
@@ -863,7 +888,7 @@ function render(){
 
   document.getElementById('stockSummary').innerHTML = table(
     ps.map(p => `<tr><td>${nm(p.name)}</td><td>${esc(p.category)}</td><td class="${p.qty <= 5 ? 'low' : ''}">${p.qty}</td><td>${money(p.price)}</td></tr>`),
-    ['পণ্য','ধরন','স্টক','বিক্রয়মূল্য']
+    ['Product','Type','Stock','Sale price']
   );
 
   renderProducts();
@@ -881,14 +906,14 @@ document.getElementById('productFilter').addEventListener('input', renderProduct
 
 document.getElementById('productForm').addEventListener('submit', async e => {
   e.preventDefault();
-  if(!isAdmin()){ alert('শুধুমাত্র Admin পণ্য যোগ করতে পারেন।'); return; }
+  if(!isAdmin()){ alert('Only Admin can add products.'); return; }
   const form = e.currentTarget;
   const f = new FormData(form);
   const br = currentBranchRow();
-  if(!br){ alert('শাখার ID পাওয়া যায়নি।'); return; }
+  if(!br){ alert('Branch ID not found.'); return; }
 
   const imei = String(f.get('imei')||'').trim();
-  if(imei && state.products.some(p => p.imei && p.imei === imei)){ alert('এই IMEI আগে থেকেই আছে।'); return; }
+  if(imei && state.products.some(p => p.imei && p.imei === imei)){ alert('This IMEI already exists.'); return; }
 
   const payload = {
     branch_id: br.id,
@@ -900,7 +925,7 @@ document.getElementById('productForm').addEventListener('submit', async e => {
     selling_price: Number(f.get('price')),
     quantity: Number(f.get('qty'))
   };
-  if(imei && payload.quantity > 1){ alert('IMEI-ওয়ালা ফোনের পরিমাণ ১ হতে হবে।'); return; }
+  if(imei && payload.quantity > 1){ alert('IMEI-tracked phone quantity must be 1.'); return; }
 
   const btn = form.querySelector('button[type=submit]');
   btn.disabled = true;
@@ -909,21 +934,21 @@ document.getElementById('productForm').addEventListener('submit', async e => {
     if(error) throw error;
     form.reset();
     await loadProductsOnline();
-    alert('পণ্য সংরক্ষণ হয়েছে।');
-  } catch(err){ alert('পণ্য সেভ হয়নি: ' + friendlyError(err)); }
+    alert('Product saved.');
+  } catch(err){ alert('Product could not be saved: ' + friendlyError(err)); }
   finally { btn.disabled = false; }
 });
 
 window.deleteProduct = async id => {
-  if(!isAdmin()){ alert('শুধুমাত্র Admin পণ্য মুছতে পারেন।'); return; }
-  if(!confirm('এই পণ্যটি মুছবেন? (এর বিক্রি/ক্রয়ের রেকর্ডেও সমস্যা হতে পারে)')) return;
+  if(!isAdmin()){ alert('Only Admin can delete products.'); return; }
+  if(!confirm('Delete this product? (its sales/purchase records may also be affected)')) return;
   const { error } = await sb.from('products').delete().eq('id', id);
-  if(error){ alert('মুছতে পারেনি: ' + error.message); return; }
+  if(error){ alert('Could not delete: ' + error.message); return; }
   await loadProductsOnline();
 };
 
 window.openEditProduct = id => {
-  if(!isAdmin()){ alert('শুধুমাত্র Admin পণ্য Edit করতে পারেন।'); return; }
+  if(!isAdmin()){ alert('Only Admin can edit products.'); return; }
   const p = productById(id);
   if(!p) return;
   const el = document.getElementById('editForm').elements;
@@ -937,11 +962,11 @@ document.getElementById('cancelEditBtn').addEventListener('click', () => documen
 
 document.getElementById('editForm').addEventListener('submit', async e => {
   e.preventDefault();
-  if(!isAdmin()){ alert('শুধুমাত্র Admin পণ্য Edit করতে পারেন।'); return; }
+  if(!isAdmin()){ alert('Only Admin can edit products.'); return; }
   const f = new FormData(e.target);
   const id = f.get('id');
   const imei = String(f.get('imei')||'').trim();
-  if(imei && state.products.some(p => p.id !== id && p.imei && p.imei === imei)){ alert('এই IMEI অন্য পণ্যে আছে।'); return; }
+  if(imei && state.products.some(p => p.id !== id && p.imei && p.imei === imei)){ alert('This IMEI is on another product.'); return; }
   const payload = {
     name: String(f.get('name')).trim(),
     brand: String(f.get('brand')||'').trim() || null,
@@ -952,18 +977,18 @@ document.getElementById('editForm').addEventListener('submit', async e => {
     quantity: Number(f.get('qty'))
   };
   const { error } = await sb.from('products').update(payload).eq('id', id);
-  if(error){ alert('আপডেট ব্যর্থ: ' + friendlyError(error)); return; }
+  if(error){ alert('Update failed: ' + friendlyError(error)); return; }
   document.getElementById('editModal').classList.add('hidden');
   await loadProductsOnline();
-  alert('পণ্য আপডেট হয়েছে।');
+  alert('Product updated.');
 });
 
 // ========== BULK MANUAL ENTRY (Admin) ==========
 function addBulkRow(data = {}){
   const tr = document.createElement('tr');
   tr.innerHTML = `
-    <td><input name="bname" value="${esc(data.name||'')}" placeholder="নাম"></td>
-    <td><input name="bbrand" value="${esc(data.brand||'')}" placeholder="ব্র্যান্ড"></td>
+    <td><input name="bname" value="${esc(data.name||'')}" placeholder="Name"></td>
+    <td><input name="bbrand" value="${esc(data.brand||'')}" placeholder="Brand"></td>
     <td><select name="bcategory">
         <option ${data.category==='Mobile'?'selected':''}>Mobile</option>
         <option ${data.category==='Accessory'?'selected':''}>Accessory</option>
@@ -983,9 +1008,9 @@ document.getElementById('clearBulkBtn').addEventListener('click', () => {
 for(let i=0;i<3;i++) addBulkRow();
 
 document.getElementById('saveBulkBtn').addEventListener('click', async () => {
-  if(!isAdmin()){ alert('শুধুমাত্র Admin বাল্ক এন্ট্রি দিতে পারেন।'); return; }
+  if(!isAdmin()){ alert('Only Admin can enter bulk entries.'); return; }
   const br = currentBranchRow();
-  if(!br){ alert('শাখার ID পাওয়া যায়নি।'); return; }
+  if(!br){ alert('Branch ID not found.'); return; }
 
   const rows = [];
   let lineNo = 0;
@@ -1001,50 +1026,50 @@ document.getElementById('saveBulkBtn').addEventListener('click', async () => {
 
     const cost = parseNum(costRaw), price = parseNum(priceRaw), qty = parseNum(qtyRaw);
     if(!name || !Number.isFinite(cost) || cost < 0 || !Number.isFinite(price) || price < 0 || !Number.isInteger(qty) || qty < 0){
-      alert(lineNo + ' নম্বর সারিতে ভুল বা অসম্পূর্ণ ডেটা আছে।');
+      alert('Row ' + lineNo + ' has wrong or incomplete data.');
       return;
     }
     rows.push({ branch_id: br.id, name, brand: brand || null, category, imei: null, purchase_price: cost, selling_price: price, quantity: qty });
   }
 
-  if(!rows.length){ alert('কমপক্ষে একটি সঠিক সারি দিন।'); return; }
-  if(!confirm(rows.length + 'টি পণ্য যোগ করবেন?')) return;
+  if(!rows.length){ alert('Enter at least one valid row.'); return; }
+  if(!confirm(rows.length + ' products will be added?')) return;
 
   const status = document.getElementById('bulkStatus');
   const btn = document.getElementById('saveBulkBtn');
   btn.disabled = true;
-  status.textContent = 'সংরক্ষণ হচ্ছে…';
+  status.textContent = 'Saving…';
   try {
     const { data, error } = await sb.from('products').insert(rows).select('id');
     if(error) throw error;
-    status.textContent = 'সফল! ' + (data?.length || rows.length) + 'টি পণ্য যোগ হয়েছে।';
+    status.textContent = 'Success! ' + (data?.length || rows.length) + ' products added.';
     document.getElementById('bulkBody').innerHTML = '';
     for(let i=0;i<3;i++) addBulkRow();
     await loadProductsOnline();
-    alert('সফল! ' + rows.length + 'টি পণ্য যোগ হয়েছে।');
+    alert('Success! ' + rows.length + ' products added.');
   } catch(err){
-    status.textContent = 'ব্যর্থ: ' + (err.message || '');
-    alert('বাল্ক সেভ ব্যর্থ: ' + (err.message || ''));
+    status.textContent = 'Failed: ' + (err.message || '');
+    alert('Bulk save failed: ' + (err.message || ''));
   } finally { btn.disabled = false; }
 });
 
 // ========== EXCEL IMPORT (Admin) ==========
 document.getElementById('importExcelBtn').addEventListener('click', async () => {
-  if(!isAdmin()){ alert('শুধুমাত্র Admin Import করতে পারেন।'); return; }
+  if(!isAdmin()){ alert('Only Admin can import products.'); return; }
   const file = document.getElementById('excelFile').files[0];
   const status = document.getElementById('importStatus');
   const mode = document.getElementById('importMode').value;
   const br = currentBranchRow();
 
-  if(!file){ alert('আগে Excel ফাইল নির্বাচন করুন।'); return; }
-  if(!br){ alert('শাখার ID পাওয়া যায়নি।'); return; }
-  if(!window.XLSX){ alert('Excel reader লোড হয়নি।'); return; }
+  if(!file){ alert('Select an Excel file first.'); return; }
+  if(!br){ alert('Branch ID not found.'); return; }
+  if(!window.XLSX){ alert('Excel reader failed to load.'); return; }
 
   const btn = document.getElementById('importExcelBtn');
   btn.disabled = true;
 
   try {
-    status.textContent = 'Excel ফাইল পড়া হচ্ছে…';
+    status.textContent = 'Excel file is being read…';
     const wb = XLSX.read(await file.arrayBuffer(), { type: 'array' });
     const ws = wb.Sheets[wb.SheetNames[0]];
     const matrix = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
@@ -1067,7 +1092,7 @@ document.getElementById('importExcelBtn').addEventListener('click', async () => 
       for(const [k, opts] of Object.entries(aliases)) found[k] = h.findIndex(v => opts.includes(v));
       if(found.name >= 0 && found.cost >= 0 && found.price >= 0 && found.qty >= 0 && found.category >= 0){ headerIndex = i; ix = found; break; }
     }
-    if(headerIndex < 0) throw new Error('প্রয়োজনীয় কলাম খুঁজে পাওয়া যায়নি (Product Name, Purchase Price, Sale Price, Quantity, Category)।');
+    if(headerIndex < 0) throw new Error('Required columns not found (Product Name, Purchase Price, Sale Price, Quantity, Category).');
 
     const cleanBranch = norm(branch());
     const merged = new Map();
@@ -1077,7 +1102,7 @@ document.getElementById('importExcelBtn').addEventListener('click', async () => 
 
       if(ix.branch >= 0){
         const rowBranch = norm(r[ix.branch]);
-        if(rowBranch && rowBranch !== cleanBranch) throw new Error((i+1) + ' নম্বর সারির Branch Name মিলেনি। নির্বাচিত: ' + branch());
+        if(rowBranch && rowBranch !== cleanBranch) throw new Error('Row ' + (i+1) + ': Branch Name does not match. Selected: ' + branch());
       }
 
       const name = String(r[ix.name] ?? '').trim();
@@ -1086,7 +1111,7 @@ document.getElementById('importExcelBtn').addEventListener('click', async () => 
       const cost = parseNum(r[ix.cost]), price = parseNum(r[ix.price]), qty = parseNum(r[ix.qty]);
 
       if(!name || !Number.isFinite(cost) || cost < 0 || !Number.isFinite(price) || price < 0 || !Number.isInteger(qty) || qty < 0){
-        throw new Error((i+1) + ' নম্বর সারির তথ্য অসম্পূর্ণ/ভুল (ফাঁকা ঘর থাকলেও ভুল ধরা হয়)।');
+        throw new Error('Row ' + (i+1) + ' has incomplete or wrong data (empty cells also count as errors).');
       }
 
       const key = (name + '|' + brand).toLowerCase();
@@ -1096,17 +1121,17 @@ document.getElementById('importExcelBtn').addEventListener('click', async () => 
     }
 
     const rows = Array.from(merged.values());
-    if(!rows.length) throw new Error('কোনো পণ্য পাওয়া যায়নি।');
+    if(!rows.length) throw new Error('No products found.');
 
     const totalQty = rows.reduce((a,x) => a + x.quantity, 0);
-    if(!confirm(`শাখা: ${branch()}\nপণ্য: ${rows.length}টি\nমোট Qty: ${totalQty}\nMode: ${mode}\n\nImport করবেন?`)) return;
+    if(!confirm(`Branch: ${branch()}\nProduct: ${rows.length} items\nTotal Qty: ${totalQty}\nMode: ${mode}\n\nImport proceed?`)) return;
 
     if(mode === 'replace'){
-      const typed = prompt('এই শাখার IMEI-বিহীন সব পণ্য ফাইল অনুযায়ী হবে; ফাইলে নেই এমন পণ্য মুছবে (বিক্রি/ক্রয়ের রেকর্ড থাকলে স্টক ০ হবে)। IMEI-ওয়ালা ফোন অপরিবর্তিত থাকবে।\nনিশ্চিত করতে REPLACE লিখুন:');
-      if(typed !== 'REPLACE'){ status.textContent = 'Import বাতিল করা হয়েছে।'; return; }
+      const typed = prompt('All non-IMEI products in this branch will be made to match the file. Products not in the file will be deleted (or set to stock 0 if they have sales/purchase records). IMEI-tracked phones are left unchanged.\nType REPLACE to confirm:');
+      if(typed !== 'REPLACE'){ status.textContent = 'Import cancelled.'; return; }
     }
 
-    status.textContent = 'Supabase-এ লিখা হচ্ছে…';
+    status.textContent = 'Writing to Supabase…';
     const res = await rpcData('import_products', {
       p_branch_id: br.id,
       p_mode: mode,
@@ -1114,17 +1139,17 @@ document.getElementById('importExcelBtn').addEventListener('click', async () => 
     });
 
     await loadProductsOnline();
-    const msg = `সফল! নতুন: ${res.inserted}, আপডেট: ${res.updated}` +
-      (mode === 'replace' ? `, মোছা: ${res.removed}, স্টক ০ করা: ${res.zeroed}` : '') + '.';
+    const msg = `Success! New: ${res.inserted}, Update: ${res.updated}` +
+      (mode === 'replace' ? `, removed: ${res.removed}, set to 0 stock: ${res.zeroed}` : '') + '.';
     status.textContent = msg;
     alert(msg);
   } catch(err){
-    status.textContent = 'Import হয়নি: ' + (err.message || 'অজানা সমস্যা');
-    alert('Import হয়নি: ' + (err.message || ''));
+    status.textContent = 'Import failed: ' + (err.message || 'Unknown problem');
+    alert('Import failed: ' + (err.message || ''));
   } finally { btn.disabled = false; }
 });
 
-// ========== SALES (কার্ট) ==========
+// ========== SALES (cart) ==========
 function selectedSaleProduct(){ return productById(document.getElementById('saleProduct').value); }
 
 function syncSaleQty(){
@@ -1157,27 +1182,27 @@ function renderCart(){
       <td><button type="button" class="danger sm" onclick="removeFromCart(${i})">×</button></td></tr>`);
   });
   box.innerHTML = rows.length
-    ? '<table class="bulk-table"><thead><tr><th>পণ্য</th><th>পরিমাণ</th><th>দাম</th><th>ছাড়</th><th>মোট</th><th></th></tr></thead><tbody>' + rows.join('') + '</tbody></table>'
-    : '<div class="empty">কার্ট খালি।</div>';
+    ? '<table class="bulk-table"><thead><tr><th>Product</th><th>Quantity</th><th>Price</th><th>Discount</th><th>Total</th><th></th></tr></thead><tbody>' + rows.join('') + '</tbody></table>'
+    : '<div class="empty">Cart is empty.</div>';
   updateSalePreview();
 }
 window.removeFromCart = i => { cart.splice(i, 1); renderCart(); };
 
 function addToCart(){
   const p = selectedSaleProduct();
-  if(!p || p.branch !== branch()){ alert('পণ্য নির্বাচন করুন।'); return; }
+  if(!p || p.branch !== branch()){ alert('Select a product.'); return; }
   const qty = parseNum(document.getElementById('saleQty').value);
-  if(!Number.isInteger(qty) || qty < 1){ alert('পরিমাণ সঠিক দিন।'); return; }
+  if(!Number.isInteger(qty) || qty < 1){ alert('Enter a valid quantity.'); return; }
   const discRaw = String(document.getElementById('saleDiscount').value || '').trim();
   const disc = discRaw === '' ? 0 : parseNum(discRaw);
 
   const existing = cart.find(c => c.productId === p.id);
   const newQty = (existing ? existing.qty : 0) + qty;
-  if(newQty > p.qty){ alert('স্টকে মাত্র ' + p.qty + 'টি আছে।'); return; }
-  if(p.imei && newQty > 1){ alert('IMEI-ওয়ালা ফোনের পরিমাণ ১ হতে হবে।'); return; }
+  if(newQty > p.qty){ alert('Only ' + p.qty + ' left in stock.'); return; }
+  if(p.imei && newQty > 1){ alert('IMEI-tracked phone quantity must be 1.'); return; }
   const maxDisc = r2(p.price * newQty);
   const newDisc = r2((existing ? existing.discount : 0) + (Number.isFinite(disc) ? disc : 0));
-  if(!Number.isFinite(disc) || disc < 0 || newDisc > maxDisc){ alert('ছাড় ০ থেকে ' + money(maxDisc) + ' এর মধ্যে দিন।'); return; }
+  if(!Number.isFinite(disc) || disc < 0 || newDisc > maxDisc){ alert('Discount must be between 0 and ' + money(maxDisc) + '.'); return; }
 
   if(existing){ existing.qty = newQty; existing.discount = newDisc; }
   else cart.push({ productId: p.id, qty, discount: r2(disc) });
@@ -1191,13 +1216,13 @@ function addToCart(){
 
 function updateSalePreview(){
   const box = document.getElementById('salePreview');
-  if(!cart.length){ box.textContent = 'কার্টে পণ্য যোগ করুন।'; return; }
+  if(!cart.length){ box.textContent = 'Add products to the cart.'; return; }
   const t = cartTotals();
   const paidRaw = String(document.getElementById('salePaid').value || '').trim();
   const paid = paidRaw === '' ? t.total : parseNum(paidRaw);
   const due = Number.isFinite(paid) ? Math.max(0, r2(t.total - paid)) : 0;
-  box.innerHTML = `মোট দাম: <strong>${money(t.gross)}</strong> · ছাড়: ${money(t.disc)} · পরিশোধযোগ্য: <strong>${money(t.total)}</strong>` +
-    (due > 0 ? ` · <span class="due">বাকি থাকবে: ${money(due)}</span>` : '');
+  box.innerHTML = `Total price: <strong>${money(t.gross)}</strong> · Discount: ${money(t.disc)} · Payable: <strong>${money(t.total)}</strong>` +
+    (due > 0 ? ` · <span class="due">Due will be: ${money(due)}</span>` : '');
 }
 
 document.getElementById('addCartBtn').addEventListener('click', addToCart);
@@ -1213,22 +1238,22 @@ document.getElementById('saleForm').addEventListener('submit', async e => {
   e.preventDefault();
   const form = e.currentTarget;
   const f = new FormData(form);
-  if(!cart.length){ alert('কার্ট খালি। আগে পণ্য যোগ করুন।'); return; }
+  if(!cart.length){ alert('Cart is empty. Add a product first.'); return; }
   const br = currentBranchRow();
-  if(!br){ alert('শাখার ID পাওয়া যায়নি।'); return; }
+  if(!br){ alert('Branch ID not found.'); return; }
 
   for(const c of cart){
     const p = productById(c.productId);
-    if(!p || p.branch !== branch()){ alert('কার্টের একটি পণ্য পাওয়া যায়নি। কার্ট ঠিক করুন।'); return; }
-    if(c.qty > p.qty){ alert(p.name + ': স্টকে মাত্র ' + p.qty + 'টি আছে।'); return; }
+    if(!p || p.branch !== branch()){ alert('A product in the cart was not found. Please fix the cart.'); return; }
+    if(c.qty > p.qty){ alert(p.name + ': Only ' + p.qty + ' left in stock.'); return; }
   }
 
   const t = cartTotals();
   const paidRaw = String(f.get('paid') || '').trim();
   const paid = paidRaw === '' ? t.total : parseNum(paidRaw);
-  if(!Number.isFinite(paid) || paid < 0 || paid > t.total){ alert('পরিশোধিত টাকা ০ থেকে ' + money(t.total) + ' এর মধ্যে দিন।'); return; }
+  if(!Number.isFinite(paid) || paid < 0 || paid > t.total){ alert('Paid amount must be between 0 and ' + money(t.total) + '.'); return; }
   const customer = String(f.get('customer') || '').trim();
-  if(paid < t.total && !customer){ alert('বাকিতে বিক্রি করতে কাস্টমারের নাম দিন।'); return; }
+  if(paid < t.total && !customer){ alert('Enter the customer name to sell on credit.'); return; }
 
   const btn = form.querySelector('button[type=submit]');
   btn.disabled = true;
@@ -1245,16 +1270,16 @@ document.getElementById('saleForm').addEventListener('submit', async e => {
     cart = [];
     document.getElementById('saleSearch').value = '';
     await loadProductsOnline();
-    if(confirm('বিক্রি সংরক্ষণ হয়েছে। ইনভয়েস প্রিন্ট করবেন?') && invId){
+    if(confirm('Sale saved. Print the invoice?') && invId){
       const line = state.sales.find(x => x.invoiceId === invId);
       if(line) window.printInvoice(line.id);
     }
   } catch(err){
-    alert('বিক্রি সংরক্ষণ হয়নি: ' + (err.message || 'v1.7 SQL চালানো হয়েছে কিনা দেখুন।'));
+    alert('Sale could not be saved: ' + (err.message || 'Check whether the v1.7 SQL has been run.'));
   } finally { btn.disabled = false; }
 });
 
-// ---------- বাকি আদায় ----------
+// ---------- Collect due ----------
 let payTarget = null;
 window.openPay = key => {
   const d = state.dues.find(x => String(x.key) === String(key));
@@ -1262,7 +1287,7 @@ window.openPay = key => {
   payTarget = d;
   document.getElementById('payInfo').innerHTML =
     `${esc(invLabel(d.invoiceNo, d.key))} · ${d.customer ? nm(d.customer) : '—'}<br>` +
-    `মোট: ${money(d.total)} · পরিশোধিত: ${money(d.paid)} · <span class="due">বাকি: ${money(d.due)}</span>`;
+    `Total: ${money(d.total)} · Paid: ${money(d.paid)} · <span class="due">Due: ${money(d.due)}</span>`;
   const el = document.getElementById('payForm').elements;
   el.amount.value = d.due; el.amount.max = d.due; el.note.value = '';
   document.getElementById('payModal').classList.remove('hidden');
@@ -1276,10 +1301,10 @@ document.getElementById('payForm').addEventListener('submit', async e => {
   const f = new FormData(form);
   const amount = parseNum(f.get('amount'));
   if(!Number.isFinite(amount) || amount <= 0 || amount > payTarget.due + 0.005){
-    alert('টাকা ০ থেকে ' + money(payTarget.due) + ' এর মধ্যে দিন।'); return;
+    alert('Amount must be between 0 and ' + money(payTarget.due) + '.'); return;
   }
   const br = currentBranchRow();
-  if(!br){ alert('শাখার ID পাওয়া যায়নি।'); return; }
+  if(!br){ alert('Branch ID not found.'); return; }
   const btn = form.querySelector('button[type=submit]');
   btn.disabled = true;
   try {
@@ -1294,41 +1319,41 @@ document.getElementById('payForm').addEventListener('submit', async e => {
     document.getElementById('payModal').classList.add('hidden');
     payTarget = null;
     await loadProductsOnline();
-    alert('জমা নেওয়া হয়েছে।');
+    alert('Payment received.');
   } catch(err){
-    alert('জমা হয়নি: ' + (err.message || ''));
+    alert('Payment could not be recorded: ' + (err.message || ''));
   } finally { btn.disabled = false; }
 });
 
 window.voidInvoice = async invoiceId => {
-  if(!isAdmin()){ alert('শুধুমাত্র Admin বিক্রি বাতিল করতে পারেন।'); return; }
+  if(!isAdmin()){ alert('Only Admin can void sales.'); return; }
   const lines = state.sales.filter(x => x.invoiceId === invoiceId && !x.voided);
   if(!lines.length) return;
   const total = r2(lines.reduce((a, x) => a + x.total, 0));
-  const reason = prompt('এই ইনভয়েসের ' + lines.length + 'টি আইটেম (' + money(total) + ') সব বাতিল করবেন? স্টক ফেরত আসবে।\nকারণ লিখুন (ঐচ্ছিক):');
+  const reason = prompt('Void all ' + lines.length + ' items (' + money(total) + ') on this invoice? Stock will be returned.\nEnter a reason (optional):');
   if(reason === null) return;
   for(const l of lines){
     const { error } = await sb.rpc('void_sale', { p_sale_id: l.id, p_reason: reason });
-    if(error){ alert('বাতিল হয়নি: ' + error.message); break; }
+    if(error){ alert('Could not void: ' + error.message); break; }
   }
   await loadProductsOnline();
 };
 
 window.voidSale = async id => {
-  if(!isAdmin()){ alert('শুধুমাত্র Admin বিক্রি বাতিল করতে পারেন।'); return; }
+  if(!isAdmin()){ alert('Only Admin can void sales.'); return; }
   const s = state.sales.find(x => x.id === id);
   if(!s) return;
-  const reason = prompt('"' + s.name + '" (' + s.qty + 'টি, ' + money(s.total) + ') বিক্রিটি বাতিল করবেন? স্টক ফেরত আসবে।\nকারণ লিখুন (ঐচ্ছিক):');
+  const reason = prompt('Void this sale: "' + s.name + '" (' + s.qty + ' items, ' + money(s.total) + ')? Stock will be returned.\nEnter a reason (optional):');
   if(reason === null) return;
   const { error } = await sb.rpc('void_sale', { p_sale_id: id, p_reason: reason });
-  if(error){ alert('বাতিল হয়নি: ' + error.message); return; }
+  if(error){ alert('Could not void: ' + error.message); return; }
   await loadProductsOnline();
 };
 
 // ========== INVOICE ==========
 window.printInvoice = id => {
   const s0 = state.sales.find(x => x.id === id);
-  if(!s0){ alert('বিক্রির তথ্য পাওয়া যায়নি।'); return; }
+  if(!s0){ alert('Sale information not found.'); return; }
   const lines = (s0.invoiceId ? state.sales.filter(x => x.invoiceId === s0.invoiceId) : [s0]).slice()
     .sort((a, b) => a.createdAt < b.createdAt ? -1 : a.createdAt > b.createdAt ? 1 : (a.id < b.id ? -1 : 1));
   const live = lines.filter(x => !x.voided);
@@ -1337,30 +1362,30 @@ window.printInvoice = id => {
   const due = r2(live.reduce((a, x) => a + x.due, 0));
   const paid = r2(total - due);
   const rowsHtml = lines.map(x => `<tr class="${x.voided ? 'voidrow' : ''}">
-      <td>${nm(x.name)}${x.imei ? '<br>IMEI: ' + esc(x.imei) : ''}${x.voided ? ' (বাতিল)' : ''}</td>
+      <td>${nm(x.name)}${x.imei ? '<br>IMEI: ' + esc(x.imei) : ''}${x.voided ? ' (Void)' : ''}</td>
       <td class="r">${x.qty}</td><td class="r">${money(x.unitPrice)}</td><td class="r">${money(r2(x.unitPrice * x.qty))}</td></tr>`).join('');
   const html = `
    <div class="inv">
     <h2>Sheba Brand Shop Cafe</h2>
     <div class="c">${esc(s0.branch)}</div>
     <hr>
-    <div>ইনভয়েস: <strong>${esc(invLabel(s0.invoiceNo, s0.id))}</strong>${live.length === 0 ? ' <strong>(বাতিল)</strong>' : ''}</div>
-    <div>তারিখ: ${esc(dateTimeOf(s0.createdAt))}</div>
-    <div>কাস্টমার: ${s0.customer ? nm(s0.customer) : '—'}${s0.phone ? ' · ' + esc(s0.phone) : ''}</div>
+    <div>Invoice: <strong>${esc(invLabel(s0.invoiceNo, s0.id))}</strong>${live.length === 0 ? ' <strong>(Void)</strong>' : ''}</div>
+    <div>Date: ${esc(dateTimeOf(s0.createdAt))}</div>
+    <div>Customer: ${s0.customer ? nm(s0.customer) : '—'}${s0.phone ? ' · ' + esc(s0.phone) : ''}</div>
     <hr>
     <table>
-      <thead><tr><th>পণ্য</th><th class="r">পরিমাণ</th><th class="r">দাম</th><th class="r">মোট</th></tr></thead>
+      <thead><tr><th>Product</th><th class="r">Quantity</th><th class="r">Price</th><th class="r">Total</th></tr></thead>
       <tbody>${rowsHtml}</tbody>
     </table>
     <table>
-      ${discount > 0 ? `<tr><td>ছাড়</td><td class="r">− ${money(discount)}</td></tr>` : ''}
-      <tr><td><strong>সর্বমোট</strong></td><td class="r"><strong>${money(total)}</strong></td></tr>
-      <tr><td>পেমেন্ট</td><td class="r">${esc(s0.payment)}</td></tr>
-      ${due > 0 ? `<tr><td>পরিশোধিত</td><td class="r">${money(paid)}</td></tr><tr><td><strong>বাকি</strong></td><td class="r"><strong>${money(due)}</strong></td></tr>` : ''}
+      ${discount > 0 ? `<tr><td>Discount</td><td class="r">− ${money(discount)}</td></tr>` : ''}
+      <tr><td><strong>Grand total</strong></td><td class="r"><strong>${money(total)}</strong></td></tr>
+      <tr><td>Payment</td><td class="r">${esc(s0.payment)}</td></tr>
+      ${due > 0 ? `<tr><td>Paid</td><td class="r">${money(paid)}</td></tr><tr><td><strong>Due</strong></td><td class="r"><strong>${money(due)}</strong></td></tr>` : ''}
     </table>
     <hr>
-    <div class="c">ধন্যবাদ! আবার আসবেন।</div>
-    <div class="c" style="font-size:11px">বিক্রিত পণ্য ফেরতের ক্ষেত্রে এই ইনভয়েস দেখাতে হবে।</div>
+    <div class="c">Thank you! Please visit again.</div>
+    <div class="c" style="font-size:11px">This invoice must be shown when returning sold items.</div>
    </div>`;
   document.getElementById('invoiceArea').innerHTML = html;
   document.body.classList.remove('print-report');
@@ -1378,10 +1403,10 @@ document.getElementById('purchaseForm').addEventListener('submit', async e => {
   const p = productById(f.get('product'));
   const qty = parseNum(f.get('qty'));
   const cost = parseNum(f.get('cost'));
-  if(!p || p.branch !== branch()){ alert('পণ্য নির্বাচন করুন।'); return; }
-  if(!Number.isInteger(qty) || qty < 1 || !Number.isFinite(cost) || cost < 0){ alert('পরিমাণ ও ক্রয়মূল্য সঠিক দিন।'); return; }
+  if(!p || p.branch !== branch()){ alert('Select a product.'); return; }
+  if(!Number.isInteger(qty) || qty < 1 || !Number.isFinite(cost) || cost < 0){ alert('Enter a valid quantity and purchase price.'); return; }
   const br = currentBranchRow();
-  if(!br){ alert('শাখার ID পাওয়া যায়নি।'); return; }
+  if(!br){ alert('Branch ID not found.'); return; }
 
   const btn = form.querySelector('button[type=submit]');
   btn.disabled = true;
@@ -1393,19 +1418,19 @@ document.getElementById('purchaseForm').addEventListener('submit', async e => {
     if(error) throw error;
     form.reset();
     await loadProductsOnline();
-    alert('ক্রয় সংরক্ষণ হয়েছে এবং স্টক আপডেট হয়েছে।');
-  } catch(err){ alert('ক্রয় সংরক্ষণ হয়নি: ' + (err.message || 'RPC setup পরীক্ষা করুন।')); }
+    alert('Purchase saved and stock updated.');
+  } catch(err){ alert('Purchase could not be saved: ' + (err.message || 'Please check the RPC setup.')); }
   finally { btn.disabled = false; }
 });
 
 window.voidPurchase = async id => {
-  if(!isAdmin()){ alert('শুধুমাত্র Admin ক্রয় বাতিল করতে পারেন।'); return; }
+  if(!isAdmin()){ alert('Only Admin can void purchases.'); return; }
   const s = state.purchases.find(x => x.id === id);
   if(!s) return;
-  const reason = prompt('"' + s.name + '" (' + s.qty + 'টি, ' + money(s.total) + ') ক্রয়টি বাতিল করবেন? স্টক কমে যাবে।\nকারণ লিখুন (ঐচ্ছিক):');
+  const reason = prompt('Void this purchase: "' + s.name + '" (' + s.qty + ' items, ' + money(s.total) + ')? Stock will decrease.\nEnter a reason (optional):');
   if(reason === null) return;
   const { error } = await sb.rpc('void_purchase', { p_purchase_id: id, p_reason: reason });
-  if(error){ alert('বাতিল হয়নি: ' + error.message); return; }
+  if(error){ alert('Could not void: ' + error.message); return; }
   await loadProductsOnline();
 };
 
@@ -1421,17 +1446,17 @@ document.getElementById('transferProduct').addEventListener('change', syncTransf
 
 document.getElementById('transferForm').addEventListener('submit', async e => {
   e.preventDefault();
-  if(!isAdmin()){ alert('শুধুমাত্র Admin ট্রান্সফার করতে পারেন।'); return; }
+  if(!isAdmin()){ alert('Only Admin can transfer stock.'); return; }
   const form = e.currentTarget;
   const f = new FormData(form);
   const p = productById(f.get('product'));
   const qty = parseNum(f.get('qty'));
   const from = currentBranchRow();
   const toId = String(f.get('to') || '');
-  if(!p || !from){ alert('পণ্য নির্বাচন করুন।'); return; }
-  if(!toId){ alert('গন্তব্য শাখা নির্বাচন করুন।'); return; }
-  if(!Number.isInteger(qty) || qty < 1 || qty > p.qty){ alert('পরিমাণ ১ থেকে ' + p.qty + ' এর মধ্যে দিন।'); return; }
-  if(!confirm(`"${p.name}" × ${qty}\n${from.name} → ${branchName(toId)}\n\nট্রান্সফার করবেন?`)) return;
+  if(!p || !from){ alert('Select a product.'); return; }
+  if(!toId){ alert('Select a destination branch.'); return; }
+  if(!Number.isInteger(qty) || qty < 1 || qty > p.qty){ alert('Quantity must be between 1 and ' + p.qty + '.'); return; }
+  if(!confirm(`"${p.name}" × ${qty}\n${from.name} → ${branchName(toId)}\n\nProceed with the transfer?`)) return;
 
   const btn = form.querySelector('button[type=submit]');
   btn.disabled = true;
@@ -1443,8 +1468,8 @@ document.getElementById('transferForm').addEventListener('submit', async e => {
     if(error) throw error;
     form.reset();
     await loadProductsOnline();
-    alert('ট্রান্সফার সম্পন্ন হয়েছে।');
-  } catch(err){ alert('ট্রান্সফার হয়নি: ' + (err.message || '')); }
+    alert('Transfer completed.');
+  } catch(err){ alert('Transfer failed: ' + (err.message || '')); }
   finally { btn.disabled = false; }
 });
 
@@ -1463,7 +1488,7 @@ function setRange(kind){
   } else { from.value = ''; to.value = ''; }
   refreshReport();
 }
-// রিপোর্টের তারিখ শেষ ৯০ দিনের আগে গেলে পুরো ইতিহাস লোড হয়
+// If the report range goes beyond the last 90 days, load the full history
 async function refreshReport(){
   if(currentUser && !historyAll){
     const from = document.getElementById('repFrom').value;
@@ -1522,24 +1547,24 @@ function renderReport(){
   const topRows = Array.from(byProd.entries()).sort((a, b) => b[1].qty - a[1].qty).slice(0, 10)
     .map(([k, v]) => `<tr><td>${nm(k)}</td><td>${v.qty}</td><td>${money(v.total)}</td></tr>`);
 
-  const label = (from || to) ? `${esc(from || '…')} থেকে ${esc(to || '…')}` : 'সব সময়';
+  const label = (from || to) ? `${esc(from || '…')} to ${esc(to || '…')}` : 'All time';
   box.innerHTML = `
-    <p><strong>শাখা:</strong> ${esc(branch())} &nbsp; <strong>সময়:</strong> ${label}</p>
+    <p><strong>Branch:</strong> ${esc(branch())} &nbsp; <strong>Period:</strong> ${label}</p>
     <div class="cards">
-      <div class="card"><div class="label">বিক্রয় (${sales.length}টি)</div><div class="value">${money(salesTotal)}</div></div>
-      <div class="card"><div class="label">দেওয়া ছাড়</div><div class="value">${money(discountTotal)}</div></div>
-      <div class="card"><div class="label">আনুমানিক লাভ</div><div class="value">${money(profitTotal)}</div></div>
-      <div class="card"><div class="label">ক্রয়</div><div class="value">${money(purchTotal)}</div></div>
-      <div class="card"><div class="label">নগদ আদায় (বাকি জমা সহ)</div><div class="value">${money(collected)}</div></div>
-      <div class="card"><div class="label">বর্তমান মোট বাকি</div><div class="value dueval">${money(dueNow)}</div></div>
+      <div class="card"><div class="label">Sales (${sales.length} items)</div><div class="value">${money(salesTotal)}</div></div>
+      <div class="card"><div class="label">Discount given</div><div class="value">${money(discountTotal)}</div></div>
+      <div class="card"><div class="label">Estimated profit</div><div class="value">${money(profitTotal)}</div></div>
+      <div class="card"><div class="label">Purchases</div><div class="value">${money(purchTotal)}</div></div>
+      <div class="card"><div class="label">Cash collected (incl. due payments)</div><div class="value">${money(collected)}</div></div>
+      <div class="card"><div class="label">Current total due</div><div class="value dueval">${money(dueNow)}</div></div>
     </div>
-    <h3>${group === 'month' ? 'মাসিক' : 'দৈনিক'} হিসাব</h3>
-    ${table(dayRows, [group === 'month' ? 'মাস' : 'তারিখ','বিক্রির সংখ্যা','বিক্রয়','লাভ','ক্রয়'])}
-    <h3>পেমেন্ট মাধ্যম অনুযায়ী বিক্রয়</h3>
-    ${table(payRows, ['মাধ্যম','মোট'])}
-    <h3>সবচেয়ে বেশি বিক্রির ১০ পণ্য</h3>
-    ${table(topRows, ['পণ্য','পরিমাণ','মোট'])}
-    <p class="small">বাতিল করা বিক্রি/ক্রয় এই রিপোর্টে ধরা হয়নি। লাভ = (বিক্রয়মূল্য − ছাড়) − রেকর্ডকৃত ক্রয়মূল্য।</p>`;
+    <h3>${group === 'month' ? 'Monthly' : 'Daily'} Summary</h3>
+    ${table(dayRows, [group === 'month' ? 'Month' : 'Date','Number of sales','Sales','Profit','Purchases'])}
+    <h3>Sales by payment method</h3>
+    ${table(payRows, ['Method','Total'])}
+    <h3>Top 10 products by sales</h3>
+    ${table(topRows, ['Product','Quantity','Total'])}
+    <p class="small">Voided sales/purchases are not counted in this report. Profit = (Sale price − Discount) − recorded purchase price.</p>`;
 }
 
 // ========== EXPORT / PRINT ==========
@@ -1571,14 +1596,19 @@ document.getElementById('printBtn').addEventListener('click', () => {
 });
 
 // ========== TABS ==========
+const closeMenu = () => document.body.classList.remove('menu-open');
+document.getElementById('menuBtn').addEventListener('click', () => document.body.classList.toggle('menu-open'));
+document.getElementById('sideBackdrop').addEventListener('click', closeMenu);
 document.querySelectorAll('[data-tab]').forEach(btn => {
   btn.addEventListener('click', () => {
     document.querySelectorAll('[data-tab]').forEach(b => b.classList.toggle('active', b === btn));
     document.querySelectorAll('.tabcontent').forEach(s => s.classList.toggle('hidden', s.id !== btn.dataset.tab));
+    closeMenu();
+    window.scrollTo({ top: 0 });
   });
 });
 
-// ========== PWA (শুধু হোস্ট করা https সাইটে কাজ করে) ==========
+// ========== PWA (only hosted https works on the site) ==========
 if('serviceWorker' in navigator && /^https?:$/.test(location.protocol)){
   navigator.serviceWorker.register('sw.js').catch(() => {});
 }
@@ -1588,104 +1618,8 @@ setRange('month');
 setSessionUI().then(() => { if(pendingDenyMessage) authStatus.textContent = pendingDenyMessage; })
   .catch(err => {
     console.error(err);
-    authStatus.textContent = 'প্রাথমিক সংযোগে সমস্যা: ' + (err.message || 'পেজ রিফ্রেশ করুন');
+    authStatus.textContent = 'Initial connection problem: ' + (err.message || 'refresh the page');
   });
-</script>
-
-<script>
-/* ===== ভাষা বদল (বাংলা / English) =====
-   ইংরেজি মোডে পেজের সব বাংলা লেখা (স্ট্যাটিক, ডাইনামিক, alert/confirm/prompt, Supabase এরর) ইংরেজিতে বদলায়।
-   ডেটাবেসে রাখা পণ্য/কাস্টমারের নাম যেমন আছে তেমনই থাকে। */
-(function(){
-  var LANG_KEY = 'sheba_lang';
-  var lang = 'bn';
-  try { lang = localStorage.getItem(LANG_KEY) === 'en' ? 'en' : 'bn'; } catch(e){}
-  var m = /[#&]lang=(en|bn)/.exec(location.hash || '');
-  if(m) lang = m[1];
-
-  var btn = document.getElementById('langBtn');
-  if(btn){
-    btn.textContent = lang === 'en' ? 'বাংলা' : 'English';
-    btn.addEventListener('click', function(){
-      var next = lang === 'en' ? 'bn' : 'en';
-      try { localStorage.setItem(LANG_KEY, next); } catch(e){}
-      location.hash = 'lang=' + next;
-      location.reload();
-    });
-  }
-  if(lang !== 'en') return;
-
-  var DICT = {"বিক্রিত পণ্য ফেরতের ক্ষেত্রে এই ইনভয়েস দেখাতে হবে": "This invoice must be shown when returning sold items", "নিচে সারি যোগ করে একসাথে অনেক পণ্য এন্ট্রি দিন": "Add rows below to enter many products at once", "নিজের ইউজার আইডি ও পাসওয়ার্ড দিয়ে লগইন করুন": "Log in with your own user ID and password", "ইন্টারনেট সংযোগ পরীক্ষা করে পেজ রিফ্রেশ করুন": "Check your internet connection and refresh the page", "পরিশোধিত টাকা ০ থেকে মোট টাকার মধ্যে হতে হবে": "Paid amount must be between 0 and the total amount", "পুরো টাকা না পেলে বাকি হিসেবে জমা থাকবে এবং": "If the full amount is not received, the remainder is saved as due and is collected from the", "ক্রয় সংরক্ষণ হয়েছে এবং স্টক আপডেট হয়েছে": "Purchase saved and stock updated", "বিক্রি হওয়া পণ্যের রেকর্ডকৃত ক্রয়মূল্য": "recorded purchase price of sold items", "ওয়ালা পণ্য পুরোটাই ট্রান্সফার করতে হবে": "tracked products must be transferred in full", "ওয়ালা ফোন পুরোটাই নতুন শাখায় চলে যায়": "tracked phones move entirely to the new branch", "বেতন ও অন্যান্য খরচ এতে অন্তর্ভুক্ত নয়": "salary and other expenses are not included", "নম্বর সারিতে ভুল বা অসম্পূর্ণ ডেটা আছে": "number row has wrong or incomplete data", "বাকিতে বিক্রি করতে কাস্টমারের নাম দিন": "Enter the customer name to sell on credit", "প্রয়োজনীয় কলাম খুঁজে পাওয়া যায়নি": "Required columns not found", "ছাড় ০ থেকে মোট দামের মধ্যে হতে হবে": "Discount must be between 0 and the total price", "এই অ্যাকাউন্টের কোনো প্রোফাইল নেই": "This account has no profile", "একই শাখায় ট্রান্সফার করা যায় না": "Cannot transfer to the same branch", "এই ক্রয়ের কিছু পণ্য আগেই বিক্রি": "Some items of this purchase were already sold", "এই শাখার সব পুরনো পণ্য মুছে যাবে": "All old products of this branch will be deleted", "ক্রয়ের রেকর্ডেও সমস্যা হতে পারে": "purchase records may also be affected", "শাখা থেকে শাখায় পণ্য ট্রান্সফার": "Transfer products from branch to branch", "পেমেন্ট মাধ্যম অনুযায়ী বিক্রয়": "Sales by payment method", "ওয়ালা ফোনের পরিমাণ ১ হতে হবে": "tracked phone quantity must be 1", "ব্র্যান্ডের একাধিক সারি থাকলে": "brand in multiple rows,", "এই অ্যাকাউন্টের রোল সঠিক নয়": "This account's role is invalid", "ক্রয়ের রেকর্ড পাওয়া যায়নি": "Purchase record not found", "পণ্য এই শাখায় পাওয়া যায়নি": "Product not found in this branch", "পরিমাণ ও ক্রয়মূল্য সঠিক দিন": "Enter a valid quantity and purchase price", "বিক্রির রেকর্ড পাওয়া যায়নি": "Sale record not found", "সবচেয়ে বেশি বিক্রির ১০ পণ্য": "Top 10 products by sales", "ক্রয় এই রিপোর্টে ধরা হয়নি": "purchases are not counted in this report", "দাম সার্ভার থেকে নেওয়া হয়": "Price is taken from the server", "ফাঁকা ঘর থাকলেও ভুল ধরা হয়": "empty cells also count as errors", "এই বিক্রি বাতিল করা হয়েছে": "This sale has been cancelled", "এই শাখায় আপনার অনুমতি নেই": "You do not have permission for this branch", "কমপক্ষে একটি সঠিক সারি দিন": "Enter at least one valid row", "গন্তব্য শাখা নির্বাচন করুন": "Select a destination branch", "গন্তব্য শাখা পাওয়া যায়নি": "Destination branch not found", "নম্বর সারির তথ্য অসম্পূর্ণ": "number row data is incomplete", "পুরনো পণ্য মুছে ফেলা হচ্ছে": "Deleting old products…", "বিক্রির তথ্য পাওয়া যায়নি": "Sale information not found", "এটি আগেই বাতিল করা হয়েছে": "This was already cancelled", "ট্যাব থেকে আদায় করা যাবে": "tab", "ট্রান্সফার সম্পন্ন হয়েছে": "Transfer completed", "বর্তমানে নির্বাচিত শাখায়": "the currently selected branch", "সার্চ বক্স অনুযায়ী ছাঁকা": "filtered by search box", "আপনার শাখা পাওয়া যায়নি": "Your branch was not found", "এর কোনো শাখা ঠিক করা নেই": "has no branch assigned", "চালানো হয়েছে কিনা দেখুন": "check whether it has been run", "বাল্ক এন্ট্রি দিতে পারেন": "can enter bulk entries", "কোনো পণ্য পাওয়া যায়নি": "No products found", "কোনো শাখা পাওয়া যায়নি": "No branches found", "প্রোফাইল লোড করা যায়নি": "Could not load profile", "বিক্রি বাতিল করতে পারেন": "can cancel sales", "ইন্টারনেট পরীক্ষা করুন": "Check your internet", "ক্রয় বাতিল করতে পারেন": "can cancel purchases", "পুরনো পণ্য মোছা যায়নি": "Old products could not be deleted", "প্রতি ইউনিট ক্রয়মূল্য": "Purchase price per unit", "প্রাথমিক সংযোগে সমস্যা": "Initial connection problem", "বর্তমান পণ্য লোড হচ্ছে": "Loading current products…", "ম্যানুয়াল বাল্ক টেবিল": "Manual bulk table", "যোগ হয়ে একটি সারি হবে": "is summed into one row", "শুধু স্টক আছে এমন পণ্য": "only products in stock", "অনলাইন শাখা লোড হয়নি": "Online branches could not be loaded", "ইনভয়েস প্রিন্ট করবেন": "Print the invoice", "ক্রয় বাতিল শুধুমাত্র": "purchase cancel only", "টাকার পরিমাণ সঠিক নয়": "Invalid amount", "ট্রান্সফার করতে পারেন": "can transfer stock", "পণ্য মুছে ফেলা হয়েছে": "Product deleted", "পুরনো মুছে নতুন দিয়ে": "Delete old products, then", "বিক্রি সংরক্ষণ হয়েছে": "Sale saved", "এই শাখার স্টক সারাংশ": "Stock summary of this branch", "গ্রাহক অনুযায়ী বাকি": "Due by customer", "ট্রান্সফার হয়ে গেছে": "transferred", "নতুন পণ্য যোগ হয়েছে": "New products were added,", "নতুন শাখার নাম লিখুন": "Enter the new branch name", "পরিশোধিত টাকা ০ থেকে": "Paid amount must be between 0 and", "পুরনোগুলো হাতে মুছুন": "delete the old ones manually", "বিক্রি সংরক্ষণ হয়নি": "Sale could not be saved", "বিক্রিটি বাতিল করবেন": "Cancel this sale", "রেকর্ডকৃত ক্রয়মূল্য": "recorded purchase price", "সংযোগ প্রস্তুত হচ্ছে": "connection is getting ready…", "উপরে নির্বাচিত শাখা": "branch selected above", "ক্রয় সংরক্ষণ হয়নি": "Purchase could not be saved", "ক্রয়টি বাতিল করবেন": "Cancel this purchase", "ক্রয়মূল্য সঠিক নয়": "Invalid purchase price", "ট্রান্সফার ও বিক্রি": "Transfers and sales", "ট্রান্সফারের ইতিহাস": "Transfer history", "পণ্য যোগ করতে পারেন": "can add products", "পণ্য সংরক্ষণ হয়েছে": "Product saved", "লাইব্রেরি লোড হয়নি": "library failed to load", "শাখা যোগ করতে পারেন": "can add branches", "এখনো কোনো তথ্য নেই": "No data yet", "কিছু পাওয়া যায়নি": "Nothing found", "টি পণ্য যোগ হয়েছে": "  products added", "নতুন পণ্য যোগ করুন": "Add new product", "পণ্য নির্বাচন করুন": "Select a product", "ফাইল নির্বাচন করুন": "select a file", "বাল্ক পণ্য এন্ট্রি": "Bulk product entry", "লগইন সম্পন্ন হয়নি": "Login was not completed", "শুধু নতুন পণ্য যোগ": "Add only new products", "স্টকে পণ্যের ইউনিট": "Units in stock", "আগে পণ্য যোগ করুন": "Add a product first", "এই শাখার মোট বাকি": "Total due of this branch", "জমা নেওয়া হয়েছে": "Payment received", "টি পণ্য যোগ করবেন": "  products will be added", "পণ্য আপডেট হয়েছে": "Product updated", "বাকিওয়ালা বিক্রি": "Sales with due", "অ্যাডমিনকে জানান": "Please inform the admin", "আবার চেষ্টা করুন": "Please try again", "এই পণ্যটি মুছবেন": "Delete this product", "ট্রান্সফার করবেন": "Proceed with the transfer", "ট্রান্সফার হয়নি": "Transfer failed", "পণ্য মুছতে পারেন": "can delete products", "পেজ রিফ্রেশ করুন": "refresh the page", "ফোন দিয়ে খুঁজুন": "search by phone", "বর্তমান মোট বাকি": "Current total due", "বাকি হলে আবশ্যিক": "required if due", "বাতিল করা বিক্রি": "Cancelled sales", "বাতিল করা হয়েছে": "has been cancelled", "বাতিল বিক্রি বাদ": "cancelled sales excluded", "বাল্ক সেভ ব্যর্থ": "Bulk save failed", "সাপ্লায়ারের নাম": "Supplier name", "আরও ১০০টি দেখান": "Show 100 more", "একসাথে অনেকগুলো": "many at once", "ক্রয় লোড হয়নি": "purchase failed to load", "টি দেখানো হচ্ছে": "  shown", "ট্রান্সফার করুন": "Transfer", "পরিমাণ সঠিক দিন": "Enter a valid quantity", "পরিমাণ সঠিক নয়": "Invalid quantity", "ফাইল পড়া হচ্ছে": "file is being read…", "বাকির বিস্তারিত": "Due details", "শাখা যোগ ব্যর্থ": "Failed to add branch", "শাখা যোগ হয়েছে": "Branch added", "স্টক যথেষ্ট নয়": "Not enough stock", "অন্য পণ্যে আছে": "is on another product", "কাস্টমারের নাম": "Customer name", "ক্রয়ের তালিকা": "Purchase list", "পণ্য লোড হয়নি": "Products failed to load", "পণ্য সেভ হয়নি": "Product could not be saved", "বাকি আছে মাত্র": "Only", "বিক্রি সংরক্ষণ": "Save sale", "বিক্রির তালিকা": "Sales list", "বিক্রির সংখ্যা": "Number of sales", "শুধু হোস্ট করা": "only hosted", "স্টক ফেরত আসবে": "Stock will be returned", "স্টকে পণ্য নেই": "No products in stock", "আগে থেকেই আছে": "already exists", "এর জন্য ইমেইল": "email for", "কত টাকা পেলেন": "How much was received", "ক্রয় সংরক্ষণ": "Save purchase", "পণ্য সম্পাদনা": "Edit product", "পণ্যের তালিকা": "Product list", "পণ্যের নাম বা": "Product name or", "পরিমাণ ১ থেকে": "Quantity must be between 1 and", "পাওয়া যায়নি": "not found", "ফাইলে একই নাম": "If a file has the same name", "বাল্ক সংরক্ষণ": "Save bulk", "শাখা নির্বাচন": "Select branch", "শাখা যোগ করুন": "Add branch", "সংরক্ষণ করবেন": "Save", "সংরক্ষণ হচ্ছে": "Saving…", "সাইটে কাজ করে": "works on the site", "স্টক কমে যাবে": "Stock will decrease", "অজানা সমস্যা": "Unknown problem", "আজকের বিক্রি": "Today's sales", "আনুমানিক লাভ": "Estimated profit", "আপডেট ব্যর্থ": "Update failed", "ইমপোর্ট করুন": "import", "এ লিখা হচ্ছে": "Writing", "এখন কত পেলেন": "Received now", "এর মধ্যে দিন": "", "তখন পরিমাণ ১": "then quantity 1", "দিয়ে খুঁজুন": "search by", "নিশ্চিত করতে": "To confirm", "পণ্য সংরক্ষণ": "Save product", "পরিমাণ লিখুন": "Enter the quantity", "পরীক্ষা করুন": "– please check", "বিক্রয়মূল্য": "Sale price", "মুছতে পারেনি": "Could not delete", "সংযোগ সমস্যা": "Connection problem", "একক ফোন হলে": "if single phone", "করতে পারবেন": "can do this", "ছাড় ০ থেকে": "Discount must be between 0 and", "টাকা ০ থেকে": "Amount must be between 0 and", "টি শাখা লোড": "  branches loaded", "দেওয়া ছাড়": "Discount given", "নতুন বিক্রি": "New sale", "নম্বর সারির": "number row's", "পণ্য ও স্টক": "Products & Stock", "পরিশোধযোগ্য": "Payable", "প্রতি ইউনিট": "Per unit", "বাকি জমা সহ": "incl. due payments", "বাতিল হয়নি": "Could not cancel", "লগইন ব্যর্থ": "Login failed", "লগইন হয়েছে": "Logged in", "লিখে খুঁজুন": "type to search", "স্টকে মাত্র": "Only", "আপডেট করুন": "Update", "আবার আসবেন": "Please visit again", "ইউজার আইডি": "User ID", "করতে পারেন": "can do this", "কারণ লিখুন": "Enter a reason", "ক্রয়মূল্য": "Purchase price", "ট্রান্সফার": "Transfer", "নতুন ক্রয়": "New purchase", "পণ্যের নাম": "Product name", "পাসওয়ার্ড": "Password", "বাকি আদায়": "Collect due", "বাকি থাকবে": "Due will be", "মোট বিক্রি": "Total sales", "লগইন হচ্ছে": "Logging in…", "সাপ্লায়ার": "Supplier", "এর বিক্রি": "its sales", "কোথা থেকে": "From", "ক্যাটাগরি": "Category", "জমা হয়নি": "Payment could not be recorded", "টির মধ্যে": "  —", "নগদ আদায়": "Cash collected", "নির্বাচিত": "Selected", "পুরনো আগে": "Oldest first", "ফোন নম্বর": "Phone number", "ব্র্যান্ড": "Brand", "মোট ক্রয়": "Total purchases", "লগইন করুন": "Please log in", "লোড হয়নি": "failed to load", "শুধুমাত্র": "Only", "উৎস শাখা": "Source branch", "এই শাখার": "this branch's", "কাস্টমার": "Customer", "ক্লিয়ার": "Clear", "নতুন আগে": "Newest first", "নতুন যোগ": "Add new", "পণ্য যোগ": "Add products", "পরিশোধিত": "Paid", "মোট ছাড়": "Total discount", "মোট বাকি": "Total due", "সারি যোগ": "Add row", "স্টক যোগ": "Add stock", "অ্যাকশন": "Action", "ইনভয়েস": "Invoice", "কম স্টক": "Low stock", "জমা নিন": "Receive payment", "ধন্যবাদ": "Thank you", "পর্যন্ত": "To", "পেমেন্ট": "Payment", "বিক্রয়": "Sales", "মোট দাম": "Total price", "রিপোর্ট": "Report", "সতর্কতা": "Notice", "সব সময়": "All time", "সর্বমোট": "Grand total", "৫ বা কম": "5 or less", "এই মাস": "This month", "ঐচ্ছিক": "optional", "কোথায়": "To", "গত মাস": "Last month", "গ্রাহক": "Customer", "টি আছে": "  left in stock", "পরিমাণ": "Quantity", "বাড়াও": "increase", "বিক্রি": "Sales", "ব্যর্থ": "Failed", "মাধ্যম": "Method", "মিলেনি": "does not match", "আদায়": "Collected", "আপডেট": "Update", "করবেন": "proceed", "ক্রয়": "Purchases", "তারিখ": "Date", "দৈনিক": "Daily", "পুরনো": "existing", "ফাঁকা": "blank", "বাতিল": "Void", "ভাড়া": "Rent", "মাসিক": "Monthly", "মুছুন": "Delete", "লগআউট": "Logout", "লিখুন": "type", "শাখার": "Branch", "হয়নি": "failed", "হিসাব": "Summary", "অথবা": "or", "করুন": "please", "কলাম": "Columns", "ছাড়": "Discount", "টাকা": "taka due", "ডেটা": "Data", "থেকে": "From", "নতুন": "New", "পণ্য": "Product", "পুরো": "full", "বাকি": "Due", "মডেল": "model", "যেমন": "e.g.", "লগইন": "Login", "শাখা": "Branch", "শুধু": "Only", "সময়": "Period", "স্টক": "Stock", "আগে": "first", "আছে": "available", "একক": "single", "জমা": "paid in", "দাম": "Price", "ধরন": "Type", "নাম": "Name", "নোট": "Note", "ফোন": "Phone", "ভুল": "wrong", "মাস": "Month", "মোট": "Total", "লাভ": "Profit", "সফল": "Success", "হবে": "will apply", "আজ": "Today", "এই": "This", "টি": "  items", "সব": "All", "দৈনিক হিসাব": "Daily summary", "মাসিক হিসাব": "Monthly summary"};
-  var PATTERNS = [["\\((\\d+)টি\\)", "($1)"], ["(\\d+) নম্বর সারিতে ভুল বা অসম্পূর্ণ ডেটা আছে", "Row $1 has wrong or incomplete data"], ["(\\d+) নম্বর সারির তথ্য অসম্পূর্ণ/ভুল", "Row $1 data is incomplete/wrong"], ["(\\d+) নম্বর সারির Branch Name মিলেনি", "Row $1 Branch Name does not match"], ["বর্তমানে নির্বাচিত শাখায় Import হবে", "Import will go to the currently selected branch"], ["Supabase-এ লিখা হচ্ছে", "Writing to Supabase"], ["এই Manager-এর কোনো শাখা ঠিক করা নেই", "No branch is assigned to this Manager"], ["(v1\\.\\d SQL(?: \\([^)]*\\))?) চালানো হয়েছে কিনা দেখুন", "Check that $1 has been run"], ["শুধুমাত্র Admin পণ্য Edit করতে পারেন", "Only Admin can edit products"], ["শুধুমাত্র Admin Import করতে পারেন", "Only Admin can import"], ["পণ্য যোগ/Edit/Delete/Import, ট্রান্সফার ও বিক্রি-ক্রয় বাতিল শুধুমাত্র Admin করতে পারবেন", "Only Admin can add/edit/delete/import products, transfer stock and cancel sales/purchases"], ["Import করবেন", "Proceed with import"], ["আগে Excel ফাইল নির্বাচন করুন", "Select an Excel file first"], ["নতুন যোগ \\+ পুরনো Quantity বাড়াও", "Add new + increase existing Quantity"], ["অথবা Excel/CSV ইমপোর্ট করুন", "Or import from Excel/CSV"], ["Excel / CSV থেকে Import", "Import from Excel / CSV"], ["Excel থেকে Import", "Import from Excel"], ["নাম / ব্র্যান্ড / IMEI দিয়ে খুঁজুন", "Search by name / brand / IMEI"], ["পণ্য / IMEI / কাস্টমার / ফোন দিয়ে খুঁজুন", "Search by product / IMEI / customer / phone"], ["পণ্যের নাম বা IMEI লিখে খুঁজুন", "Search by product name or IMEI"], ["([\\d-]{10}|…) থেকে ([\\d-]{10}|…)", "$1 to $2"]].map(function(p){ return [new RegExp(p[0], 'g'), p[1]]; });
-  var BN_TEST = /[ঀ-৲৴-৿।]/;
-  var RUN = /[ঀ-৲৴-৿]+(?:[ ‌‍]+[ঀ-৲৴-৿]+)*/g;
-
-  function tr(s){
-    s = String(s);
-    if(!BN_TEST.test(s)) return s;
-    PATTERNS.forEach(function(p){ s = s.replace(p[0], p[1]); });
-    s = s.replace(RUN, function(r){ return Object.prototype.hasOwnProperty.call(DICT, r) ? DICT[r] : r; });
-    s = s.replace(/।/g, '.').replace(/ +([.?!])/g, '$1').replace(/ {2,}/g, ' ');
-    return s;
-  }
-  window.__tr = tr;
-
-  document.documentElement.lang = 'en';
-  document.title = tr(document.title);
-
-  // alert / confirm / prompt
-  var _alert = window.alert, _confirm = window.confirm, _prompt = window.prompt;
-  window.alert = function(msg){ return _alert.call(window, tr(msg)); };
-  window.confirm = function(msg){ return _confirm.call(window, tr(msg)); };
-  window.prompt = function(msg, def){ return _prompt.call(window, tr(msg), def); };
-
-  function skipEl(el){ return !el || !!(el.closest && el.closest('script,style,[data-i18n-skip]')); }
-
-  function fixText(n){
-    var p = n.parentElement;
-    if(skipEl(p)) return;
-    var v = n.nodeValue;
-    if(!BN_TEST.test(v)) return;
-    if((p.id === 'cancelEditBtn' || p.id === 'cancelPayBtn') && v.trim() === 'বাতিল'){ n.nodeValue = 'Cancel'; return; }
-    var t = tr(v);
-    if(t !== v) n.nodeValue = t;
-  }
-  var ATTRS = ['placeholder', 'title', 'aria-label'];
-  function fixAttrs(el){
-    if(skipEl(el)) return;
-    ATTRS.forEach(function(a){
-      if(el.hasAttribute(a)){
-        var v = el.getAttribute(a), t = tr(v);
-        if(t !== v) el.setAttribute(a, t);
-      }
-    });
-  }
-  function scan(node){
-    if(node.nodeType === 3){ fixText(node); return; }
-    if(node.nodeType !== 1 || skipEl(node)) return;
-    fixAttrs(node);
-    node.querySelectorAll('[placeholder],[title],[aria-label]').forEach(fixAttrs);
-    var w = document.createTreeWalker(node, NodeFilter.SHOW_TEXT, null);
-    var list = [], x;
-    while((x = w.nextNode())) list.push(x);
-    list.forEach(fixText);
-  }
-  function handle(records){
-    records.forEach(function(r){
-      if(r.type === 'childList') r.addedNodes.forEach(scan);
-      else if(r.type === 'characterData') fixText(r.target);
-      else if(r.type === 'attributes') fixAttrs(r.target);
-    });
-  }
-  var mo = new MutationObserver(handle);
-  scan(document.body);
-  mo.observe(document.body, { childList: true, subtree: true, characterData: true,
-                              attributes: true, attributeFilter: ATTRS });
-
-  // প্রিন্টের আগে অপেক্ষমাণ অনুবাদ শেষ করা (ইনভয়েস/রিপোর্ট ইংরেজিতে ছাপার জন্য)
-  var _print = window.print;
-  window.print = function(){ handle(mo.takeRecords()); return _print.apply(window, arguments); };
-})();
 </script>
 </body>
 </html>
