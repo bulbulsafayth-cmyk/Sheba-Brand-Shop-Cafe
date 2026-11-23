@@ -56,12 +56,12 @@ table{border-collapse:collapse;width:100%;min-width:650px}th,td{text-align:left;
 footer{text-align:center;padding:18px;color:#e2e8f0;font-size:12px;text-shadow:0 1px 2px rgba(0,0,0,.35)}
 /* ---- animated branch names in the background ---- */
 #bgNames{position:fixed;inset:0;z-index:-1;overflow:hidden;pointer-events:none}
-#bgNames .bg-pos{position:absolute;white-space:nowrap}
-#bgNames .bg-name{display:inline-block;font-weight:800;letter-spacing:.05em;color:rgba(255,255,255,.22);text-shadow:0 0 28px rgba(255,255,255,.22);font-size:clamp(22px,4.2vw,46px);will-change:transform,opacity;animation:bgBob var(--dur,6s) ease-in-out var(--delay,0s) infinite alternate}
-@keyframes bgBob{from{translate:0 -10px}to{translate:0 12px}}
+#bgNames .bg-pos{position:absolute;left:0;top:0;will-change:transform}
+#bgNames .bg-name{display:grid;place-items:center;text-align:center;width:clamp(92px,10vw,124px);aspect-ratio:1/1;padding:10px;border-radius:50%;font-weight:700;font-size:clamp(11px,1.1vw,13px);line-height:1.2;overflow-wrap:anywhere;color:#fff;text-shadow:0 1px 6px rgba(0,30,90,.7);background:radial-gradient(circle at 30% 26%,rgba(255,255,255,.6),rgba(255,255,255,.14) 38%,rgba(70,140,255,.2) 70%,rgba(255,255,255,.08));border:1px solid rgba(255,255,255,.45);box-shadow:inset 0 0 16px rgba(255,255,255,.3),inset -6px -8px 18px rgba(80,140,255,.25),0 0 22px rgba(70,140,255,.4);will-change:transform,opacity;animation:bgBob var(--dur,6s) ease-in-out var(--delay,0s) infinite alternate}
+@keyframes bgBob{from{translate:0 -6px}to{translate:0 7px}}
 #bgNames .bg-bomb{position:absolute;left:50%;top:0;white-space:nowrap;font-weight:900;color:#fff;font-size:clamp(26px,6vw,64px);text-shadow:0 0 30px rgba(255,200,120,.9),0 0 60px rgba(255,140,60,.6);will-change:transform,opacity}
 #bgNames .bg-ring{position:absolute;width:40px;height:40px;margin:-20px 0 0 -20px;border-radius:50%;border:3px solid rgba(255,220,170,.9)}
-#bgNames .bg-spark{position:absolute;width:8px;height:8px;margin:-4px 0 0 -4px;border-radius:50%;background:#ffd9a0;box-shadow:0 0 12px #ffb066}
+#bgNames .bg-spark{position:absolute;width:12px;height:12px;margin:-6px 0 0 -6px;background:linear-gradient(135deg,#fff,#9cc8ff);box-shadow:0 0 10px rgba(180,220,255,.9);clip-path:polygon(50% 0,100% 100%,0 80%)}
 #bgNames .bg-flash{position:absolute;inset:0;opacity:0}
 @media(prefers-reduced-motion:reduce){#bgNames .bg-name{animation:none}}
 @media print{#bgNames{display:none!important}}
@@ -469,6 +469,160 @@ function renderBgNames(names){
   playBgIntro(list, ++bgToken);
 }
 
+// ---- glass-break sound (made in code, no audio file needed) ----
+let bgCtx = null;
+function bgAudioCtx(){
+  const AC = window.AudioContext || window.webkitAudioContext;
+  if(!AC) return null;
+  if(!bgCtx){ try { bgCtx = new AC(); } catch(e){ return null; } }
+  return bgCtx;
+}
+// Browsers block sound until the first tap/click/key, so unlock audio on the first interaction
+['pointerdown','keydown','touchstart'].forEach(ev => window.addEventListener(ev, () => {
+  const c = bgAudioCtx();
+  if(c && c.state === 'suspended') c.resume().catch(() => {});
+}, { once: true, passive: true }));
+
+function playGlassBreak(){
+  const ctx = bgAudioCtx();
+  if(!ctx) return;
+  const go = () => {
+    if(ctx.state !== 'running') return;
+    const t0 = ctx.currentTime + 0.02;
+    const master = ctx.createGain(); master.gain.value = 0.55; master.connect(ctx.destination);
+    const noiseBuf = ctx.createBuffer(1, Math.floor(ctx.sampleRate * 0.6), ctx.sampleRate);
+    const d = noiseBuf.getChannelData(0);
+    for(let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+    const burst = (at, dur, freq, vol) => {
+      const src = ctx.createBufferSource(); src.buffer = noiseBuf;
+      const hp = ctx.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = freq;
+      const g = ctx.createGain();
+      g.gain.setValueAtTime(0.0001, at);
+      g.gain.exponentialRampToValueAtTime(vol, at + 0.004);
+      g.gain.exponentialRampToValueAtTime(0.0001, at + dur);
+      src.connect(hp); hp.connect(g); g.connect(master);
+      src.start(at, Math.random() * 0.2, dur + 0.05);
+    };
+    // sharp crack + small crackles
+    burst(t0, 0.35, 1800, 0.9);
+    for(let i = 0; i < 9; i++) burst(t0 + 0.03 + Math.random() * 0.45, 0.05 + Math.random() * 0.07, 3000 + Math.random() * 3000, 0.25 + Math.random() * 0.3);
+    // low thud of the impact
+    const th = ctx.createOscillator(), tg = ctx.createGain();
+    th.type = 'sine';
+    th.frequency.setValueAtTime(150, t0); th.frequency.exponentialRampToValueAtTime(45, t0 + 0.25);
+    tg.gain.setValueAtTime(0.9, t0); tg.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.3);
+    th.connect(tg); tg.connect(master); th.start(t0); th.stop(t0 + 0.32);
+    // glass tinkles
+    for(let i = 0; i < 28; i++){
+      const at = t0 + 0.02 + Math.random() * 0.7;
+      const o = ctx.createOscillator(), g = ctx.createGain();
+      o.type = Math.random() < 0.5 ? 'sine' : 'triangle';
+      o.frequency.value = 2200 + Math.random() * 7000;
+      const dur = 0.08 + Math.random() * 0.28;
+      g.gain.setValueAtTime(0.0001, at);
+      g.gain.exponentialRampToValueAtTime(0.04 + Math.random() * 0.09, at + 0.003);
+      g.gain.exponentialRampToValueAtTime(0.0001, at + dur);
+      o.connect(g); g.connect(master); o.start(at); o.stop(at + dur + 0.02);
+    }
+  };
+  if(ctx.state === 'suspended') ctx.resume().then(go).catch(() => {}); else go();
+}
+
+// ---- cracked-glass effect over the whole screen, spreading from the impact point ----
+function showGlassCrack(ix, iy){
+  const W = window.innerWidth, H = window.innerHeight, NS = 'http://www.w3.org/2000/svg';
+  const svg = document.createElementNS(NS, 'svg');
+  svg.setAttribute('width', W); svg.setAttribute('height', H);
+  svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+  svg.setAttribute('aria-hidden', 'true');
+  svg.style.cssText = 'position:fixed;left:0;top:0;z-index:9998;pointer-events:none;filter:drop-shadow(0 0 3px rgba(170,215,255,.95))';
+  const rnd = (a, b) => a + Math.random() * (b - a);
+  const maxR = Math.hypot(Math.max(ix, W - ix), Math.max(iy, H - iy)) + 40;
+  const add = (tag, attrs) => { const e = document.createElementNS(NS, tag); for(const k in attrs) e.setAttribute(k, attrs[k]); svg.appendChild(e); return e; };
+  const line = (d, width, opacity) => add('path', { d, fill: 'none', stroke: 'rgba(255,255,255,' + opacity + ')', 'stroke-width': width, 'stroke-linejoin': 'miter', pathLength: 1, 'stroke-dasharray': 1 });
+  const draw = (el, dur, delay) => el.animate([{ strokeDashoffset: 1 }, { strokeDashoffset: 0 }], { duration: dur, delay, easing: 'cubic-bezier(.1,.8,.2,1)', fill: 'both' });
+  const ptAt = (pts, r) => {
+    for(let j = 1; j < pts.length; j++){
+      if(pts[j][2] >= r){
+        const p = pts[j - 1], q = pts[j], t = (r - p[2]) / ((q[2] - p[2]) || 1);
+        return [p[0] + (q[0] - p[0]) * t, p[1] + (q[1] - p[1]) * t];
+      }
+    }
+    return null;
+  };
+
+  // main cracks: jagged lines going out from the impact point
+  const N = 15, rays = [];
+  for(let i = 0; i < N; i++){
+    const ang = (i / N) * Math.PI * 2 + rnd(-0.18, 0.18);
+    const len = maxR * rnd(0.55, 1);
+    const pts = [[ix, iy, 0]];
+    let dist = 0, off = 0;
+    while(dist < len){
+      dist += rnd(26, 60);
+      off = Math.max(-14, Math.min(14, off + rnd(-9, 9)));
+      pts.push([ix + Math.cos(ang) * dist - Math.sin(ang) * off, iy + Math.sin(ang) * dist + Math.cos(ang) * off, dist]);
+    }
+    rays.push({ pts, ang, len });
+  }
+
+  // faint glass shards between the cracks near the centre
+  const bands = [[0, 70], [70, 150], [150, 250]];
+  bands.forEach(([r0, r1]) => {
+    for(let k = 0; k < N; k++){
+      const A = rays[k].pts, B = rays[(k + 1) % N].pts;
+      const a0 = r0 ? ptAt(A, r0) : [ix, iy], b0 = r0 ? ptAt(B, r0) : [ix, iy];
+      const a1 = ptAt(A, r1), b1 = ptAt(B, r1);
+      if(!a0 || !b0 || !a1 || !b1) continue;
+      const poly = add('polygon', { points: [a0, a1, b1, b0].map(p => p[0].toFixed(1) + ',' + p[1].toFixed(1)).join(' '), fill: 'rgba(205,230,255,' + rnd(0.03, 0.11).toFixed(3) + ')' });
+      poly.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 250, delay: 120 + r1, fill: 'both' });
+    }
+  });
+
+  // web rings joining the cracks
+  [60, 130, 220, 340, 500].forEach((r, ri) => {
+    for(let k = 0; k < N; k++){
+      if(Math.random() < 0.22) continue;
+      const a = ptAt(rays[k].pts, r), b = ptAt(rays[(k + 1) % N].pts, r);
+      if(!a || !b) continue;
+      const mx = (a[0] + b[0]) / 2 + rnd(-7, 7), my = (a[1] + b[1]) / 2 + rnd(-7, 7);
+      draw(line(`M${a[0].toFixed(1)},${a[1].toFixed(1)} L${mx.toFixed(1)},${my.toFixed(1)} L${b[0].toFixed(1)},${b[1].toFixed(1)}`, rnd(0.8, 1.4), 0.75), 220, 90 + r * 0.6 + ri * 25);
+    }
+  });
+
+  // draw main cracks + small side branches
+  rays.forEach(({ pts, ang, len }) => {
+    const d = 'M' + pts.map(p => p[0].toFixed(1) + ',' + p[1].toFixed(1)).join(' L');
+    draw(line(d, rnd(1.2, 2.4), 0.95), 160 + len * 0.3, 0);
+    const nb = 2 + Math.floor(Math.random() * 2);
+    for(let b = 0; b < nb; b++){
+      const idx = 2 + Math.floor(Math.random() * Math.max(1, pts.length - 3));
+      const s = pts[Math.min(idx, pts.length - 1)];
+      const ba = ang + (Math.random() < 0.5 ? -1 : 1) * rnd(0.4, 0.9);
+      const blen = rnd(50, 170);
+      let bd = 0, bo = 0, bp = `M${s[0].toFixed(1)},${s[1].toFixed(1)}`;
+      while(bd < blen){
+        bd += rnd(18, 34);
+        bo = Math.max(-8, Math.min(8, bo + rnd(-6, 6)));
+        bp += ` L${(s[0] + Math.cos(ba) * bd - Math.sin(ba) * bo).toFixed(1)},${(s[1] + Math.sin(ba) * bd + Math.cos(ba) * bo).toFixed(1)}`;
+      }
+      draw(line(bp, rnd(0.7, 1.1), 0.8), 160, 40 + s[2] * 0.35);
+    }
+  });
+
+  // bright impact point
+  const halo = add('circle', { cx: ix, cy: iy, r: 26, fill: 'rgba(255,255,255,.35)' });
+  halo.animate([{ opacity: 1, transform: 'scale(.4)' }, { opacity: 0, transform: 'scale(1.6)' }], { duration: 700, easing: 'ease-out', fill: 'forwards' });
+  halo.style.transformOrigin = ix + 'px ' + iy + 'px';
+  add('circle', { cx: ix, cy: iy, r: 6, fill: '#fff' });
+
+  document.body.appendChild(svg);
+  // the cracks stay for a moment, then fade away so the screen is usable again
+  setTimeout(() => {
+    svg.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 1400, fill: 'forwards' }).onfinish = () => svg.remove();
+  }, 2800);
+}
+
 async function playBgIntro(list, token){
   const box = document.getElementById('bgNames');
   if(!box) return;
@@ -478,17 +632,13 @@ async function playBgIntro(list, token){
   box.innerHTML = '';
 
   const W = window.innerWidth, H = window.innerHeight;
-  const ix = W / 2, iy = H * 0.5;          // blast point
+  const ix = W / 2, iy = H * 0.64;         // blast point (lower on the screen)
 
-  // Place the branch names (hidden until the blast)
-  const leftPct = [6, 52, 14, 64, 8, 46, 22, 70, 10, 56];
+  // Branch names as small bubbles (hidden until the blast)
   const n = list.length;
-  const inners = list.map((name, i) => {
-    const pct = leftPct[i % leftPct.length];
-    const top = n > 1 ? 8 + i * (80 / n) : 40;
+  const bubbles = list.map((name, i) => {
     const pos = document.createElement('div');
     pos.className = 'bg-pos';
-    pos.style.cssText = `left:${pct}%;top:${top}%;transform:translateX(-${pct}%)`;
     const inner = document.createElement('span');
     inner.className = 'bg-name';
     inner.textContent = name;
@@ -497,9 +647,15 @@ async function playBgIntro(list, token){
     if(canAnimate) inner.style.opacity = '0';
     pos.appendChild(inner);
     box.appendChild(pos);
-    return inner;
+    const s = pos.offsetWidth || 110, m = 12;
+    const x = m + ((i * 0.618 + 0.08) % 1) * Math.max(10, W - s - 2 * m);
+    const y = m + ((i + 0.5) / n) * Math.max(10, H - s - 2 * m);
+    const ang = Math.random() * Math.PI * 2, sp = 18 + Math.random() * 24;
+    pos.style.transform = `translate(${x}px,${y}px)`;
+    return { pos, inner, s, x, y, vx: Math.cos(ang) * sp, vy: Math.sin(ang) * sp };
   });
-  if(!canAnimate) return;                  // reduced motion: names just appear
+  const inners = bubbles.map(b => b.inner);
+  if(!canAnimate) return;                  // reduced motion: bubbles just appear, no movement
 
   // 1) Bomb falls from the top (gravity: slow start, fast end)
   const bomb = document.createElement('div');
@@ -510,7 +666,7 @@ async function playBgIntro(list, token){
   const landY = iy - bh / 2;
   await bomb.animate(
     [{ transform: `translate(-50%,${-bh - 60}px) rotate(-8deg)` }, { transform: `translate(-50%,${landY}px) rotate(0deg)` }],
-    { duration: 1500, easing: 'cubic-bezier(.55,0,1,.45)', fill: 'forwards' }
+    { duration: 3400, easing: 'cubic-bezier(.45,.05,.9,.6)', fill: 'forwards' }
   ).finished.catch(() => {});
   if(!alive()) return;
 
@@ -526,15 +682,12 @@ async function playBgIntro(list, token){
   );
   const fx = document.createElement('div');
   fx.className = 'bg-flash';
-  fx.style.background = `radial-gradient(circle at ${ix}px ${iy}px,rgba(255,235,200,.9),rgba(255,235,200,0) 55%)`;
+  fx.style.background = `radial-gradient(circle at ${ix}px ${iy}px,rgba(225,240,255,.95),rgba(225,240,255,0) 55%)`;
   box.appendChild(fx);
   fx.animate([{ opacity: 0 }, { opacity: 1, offset: .15 }, { opacity: 0 }], { duration: 600, easing: 'ease-out' }).onfinish = () => fx.remove();
 
-  const ring = document.createElement('div');
-  ring.className = 'bg-ring';
-  ring.style.left = ix + 'px'; ring.style.top = iy + 'px';
-  box.appendChild(ring);
-  ring.animate([{ transform: 'scale(1)', opacity: 1 }, { transform: 'scale(30)', opacity: 0 }], { duration: 950, easing: 'ease-out' }).onfinish = () => ring.remove();
+  showGlassCrack(ix, iy);   // screen-crack effect
+  playGlassBreak();         // glass-breaking sound
 
   for(let i = 0; i < 28; i++){
     const sp = document.createElement('div');
@@ -543,7 +696,7 @@ async function playBgIntro(list, token){
     box.appendChild(sp);
     const ang = Math.random() * Math.PI * 2, dist = 120 + Math.random() * 320;
     sp.animate(
-      [{ transform: 'translate(0,0) scale(1)', opacity: 1 }, { transform: `translate(${Math.cos(ang) * dist}px,${Math.sin(ang) * dist}px) scale(.2)`, opacity: 0 }],
+      [{ transform: 'translate(0,0) rotate(0deg) scale(1)', opacity: 1 }, { transform: `translate(${Math.cos(ang) * dist}px,${Math.sin(ang) * dist}px) rotate(${Math.round(Math.random() * 720 - 360)}deg) scale(.3)`, opacity: 0 }],
       { duration: 700 + Math.random() * 400, easing: 'cubic-bezier(.1,.7,.3,1)' }
     ).onfinish = () => sp.remove();
   }
@@ -557,6 +710,35 @@ async function playBgIntro(list, token){
       { duration: 1200, delay: 150 + i * 90, easing: 'cubic-bezier(.2,.9,.25,1.12)', fill: 'both' }
     );
   });
+
+  // 4) Bubbles keep drifting around the screen, bouncing off the edges and off each other
+  let last = performance.now();
+  const step = now => {
+    if(!alive()) return;
+    const dt = Math.min(0.05, (now - last) / 1000); last = now;
+    const w = window.innerWidth, h = window.innerHeight;
+    bubbles.forEach(b => {
+      b.x += b.vx * dt; b.y += b.vy * dt;
+      if(b.x < 0){ b.x = 0; b.vx = Math.abs(b.vx); }
+      else if(b.x > w - b.s){ b.x = Math.max(0, w - b.s); b.vx = -Math.abs(b.vx); }
+      if(b.y < 0){ b.y = 0; b.vy = Math.abs(b.vy); }
+      else if(b.y > h - b.s){ b.y = Math.max(0, h - b.s); b.vy = -Math.abs(b.vy); }
+    });
+    for(let i = 0; i < bubbles.length; i++) for(let j = i + 1; j < bubbles.length; j++){
+      const a = bubbles[i], c = bubbles[j];
+      const dx = (c.x + c.s / 2) - (a.x + a.s / 2), dy = (c.y + c.s / 2) - (a.y + a.s / 2);
+      const min = (a.s + c.s) / 2, d2 = dx * dx + dy * dy;
+      if(d2 > 0 && d2 < min * min){
+        const d = Math.sqrt(d2), nx = dx / d, ny = dy / d, push = (min - d) / 2;
+        a.x -= nx * push; a.y -= ny * push; c.x += nx * push; c.y += ny * push;
+        const rv = (c.vx - a.vx) * nx + (c.vy - a.vy) * ny;
+        if(rv < 0){ a.vx += rv * nx; a.vy += rv * ny; c.vx -= rv * nx; c.vy -= rv * ny; }
+      }
+    }
+    bubbles.forEach(b => { b.pos.style.transform = `translate(${b.x.toFixed(1)}px,${b.y.toFixed(1)}px)`; });
+    requestAnimationFrame(step);
+  };
+  requestAnimationFrame(step);
 }
 
 async function fetchAll(build){
