@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="theme-color" content="#14213d">
+<meta name="theme-color" content="#02030a">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <link rel="manifest" href="manifest.webmanifest">
@@ -11,12 +11,15 @@
 <title>Sheba Brand Shop Cafe | Management v1.7</title>
 <style>
 :root{--navy:#14213d;--blue:#2563eb;--bg:#f4f7fb;--white:#fff;--muted:#64748b;--green:#15803d;--red:#b91c1c;--orange:#c2410c}
-*{box-sizing:border-box}body{margin:0;font-family:Arial,"Noto Sans Bengali",sans-serif;background:var(--bg);color:#172033}
-header{background:var(--navy);color:white;padding:20px 24px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,"Noto Sans Bengali",sans-serif;color:#172033;min-height:100vh;background-color:#02030a}
+#bgArt{position:fixed;inset:0;width:100%;height:100%;z-index:-2;pointer-events:none;display:block}
+@media print{#bgArt{display:none!important}}
+header{background:rgba(20,33,61,.82);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);color:white;padding:20px 24px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
 header h1{font-size:22px;margin:0 0 5px}header p{margin:0;color:#cbd5e1;font-size:13px}
 main{max-width:1200px;margin:0 auto;padding:20px}
 .notice{background:#fff7ed;border:1px solid #fed7aa;color:#9a3412;padding:12px 14px;border-radius:10px;margin-bottom:16px;font-size:14px;line-height:1.5}
-.toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:16px}
+.toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:16px;background:rgba(255,255,255,.92);border:1px solid #e5eaf2;border-radius:12px;padding:10px 12px}
 select,input,button,textarea{font:inherit;border-radius:8px;border:1px solid #cbd5e1;padding:10px 12px;background:white}
 button{background:var(--blue);border-color:var(--blue);color:white;cursor:pointer;font-weight:600}
 button:disabled{opacity:.6;cursor:not-allowed}
@@ -50,7 +53,18 @@ table{border-collapse:collapse;width:100%;min-width:650px}th,td{text-align:left;
 .small{font-size:12px;color:var(--muted)}.empty{text-align:center;color:var(--muted);padding:20px}
 .hidden{display:none!important}.pill{display:inline-block;background:#dcfce7;color:#166534;padding:4px 8px;border-radius:20px;font-size:12px}
 .pill.admin{background:#dbeafe;color:#1e40af}.pill.branch{background:#fef3c7;color:#92400e}.pill.void{background:#fee2e2;color:#991b1b}
-footer{text-align:center;padding:18px;color:var(--muted);font-size:12px}
+footer{text-align:center;padding:18px;color:#e2e8f0;font-size:12px;text-shadow:0 1px 2px rgba(0,0,0,.35)}
+/* ---- animated branch names in the background ---- */
+#bgNames{position:fixed;inset:0;z-index:-1;overflow:hidden;pointer-events:none}
+#bgNames .bg-pos{position:absolute;white-space:nowrap}
+#bgNames .bg-name{display:inline-block;font-weight:800;letter-spacing:.05em;color:rgba(255,255,255,.22);text-shadow:0 0 28px rgba(255,255,255,.22);font-size:clamp(22px,4.2vw,46px);will-change:transform,opacity;animation:bgBob var(--dur,6s) ease-in-out var(--delay,0s) infinite alternate}
+@keyframes bgBob{from{translate:0 -10px}to{translate:0 12px}}
+#bgNames .bg-bomb{position:absolute;left:50%;top:0;white-space:nowrap;font-weight:900;color:#fff;font-size:clamp(26px,6vw,64px);text-shadow:0 0 30px rgba(255,200,120,.9),0 0 60px rgba(255,140,60,.6);will-change:transform,opacity}
+#bgNames .bg-ring{position:absolute;width:40px;height:40px;margin:-20px 0 0 -20px;border-radius:50%;border:3px solid rgba(255,220,170,.9)}
+#bgNames .bg-spark{position:absolute;width:8px;height:8px;margin:-4px 0 0 -4px;border-radius:50%;background:#ffd9a0;box-shadow:0 0 12px #ffb066}
+#bgNames .bg-flash{position:absolute;inset:0;opacity:0}
+@media(prefers-reduced-motion:reduce){#bgNames .bg-name{animation:none}}
+@media print{#bgNames{display:none!important}}
 .modal-overlay{position:fixed;inset:0;background:rgba(15,23,42,.55);display:flex;align-items:center;justify-content:center;z-index:100;padding:16px}
 .modal{background:white;border-radius:14px;padding:22px;max-width:560px;width:100%;max-height:90vh;overflow:auto;box-shadow:0 20px 50px rgba(0,0,0,.2)}
 .modal h3{margin:0 0 14px;font-size:18px}
@@ -91,6 +105,44 @@ tr.voided td:last-child{text-decoration:none}
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 </head>
 <body>
+<!-- Neon blue / red background art (drawn in code, scales to any screen) -->
+<svg id="bgArt" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2576 1449" preserveAspectRatio="xMidYMid slice">
+ <defs>
+  <radialGradient id="bgaBlue" cx="1000" cy="450" r="1150" gradientUnits="userSpaceOnUse">
+   <stop offset="0" stop-color="#0b2f9a"/><stop offset=".55" stop-color="#06185a"/><stop offset="1" stop-color="#02030c"/>
+  </radialGradient>
+  <linearGradient id="bgaRed" x1="1000" y1="1380" x2="1700" y2="520" gradientUnits="userSpaceOnUse">
+   <stop offset="0" stop-color="#a8122a"/><stop offset=".6" stop-color="#ff3a4a"/><stop offset="1" stop-color="#ff6b78"/>
+  </linearGradient>
+  <linearGradient id="bgaLine" x1="2420" y1="0" x2="1730" y2="455" gradientUnits="userSpaceOnUse">
+   <stop offset="0" stop-color="#ffc0e0"/><stop offset=".4" stop-color="#ff6a86"/><stop offset="1" stop-color="#ff2f40"/>
+  </linearGradient>
+  <radialGradient id="bgaWash" cx="2250" cy="1150" r="950" gradientUnits="userSpaceOnUse">
+   <stop offset="0" stop-color="#7a0a14" stop-opacity=".8"/><stop offset="1" stop-color="#7a0a14" stop-opacity="0"/>
+  </radialGradient>
+  <filter id="bgaBlur" filterUnits="userSpaceOnUse" x="0" y="0" width="2576" height="1449"><feGaussianBlur stdDeviation="16"/></filter>
+  <filter id="bgaSoft" filterUnits="userSpaceOnUse" x="0" y="0" width="2576" height="1449"><feGaussianBlur stdDeviation="5"/></filter>
+ </defs>
+ <rect width="2576" height="1449" fill="#02030a"/>
+ <rect width="2576" height="1449" fill="url(#bgaWash)"/>
+ <!-- blue panel -->
+ <path d="M0,0 H1585 V290 C1585,390 1550,440 1480,495 L330,1449 H0 Z" fill="url(#bgaBlue)"/>
+ <rect x="1585" y="0" width="145" height="470" fill="#12256f" opacity=".5"/>
+ <path d="M1730,0 V490" stroke="#4a6fd0" stroke-width="3" opacity=".6" fill="none"/>
+ <!-- blue neon line -->
+ <path d="M1585,0 V290 C1585,390 1550,440 1480,495 L330,1449" stroke="#2f7dff" stroke-width="28" fill="none" opacity=".85" filter="url(#bgaBlur)"/>
+ <path d="M1585,0 V290 C1585,390 1550,440 1480,495 L330,1449" stroke="#7fb8ff" stroke-width="10" fill="none" opacity=".8" filter="url(#bgaSoft)"/>
+ <path d="M1585,0 V290 C1585,390 1550,440 1480,495 L330,1449" stroke="#d2e8ff" stroke-width="4" fill="none"/>
+ <!-- red neon line (top right) -->
+ <path d="M2420,0 L1730,455" stroke="url(#bgaLine)" stroke-width="24" fill="none" opacity=".8" filter="url(#bgaBlur)"/>
+ <path d="M2420,0 L1730,455" stroke="url(#bgaLine)" stroke-width="4" fill="none"/>
+ <!-- red glowing shape -->
+ <path d="M1700,490 C1730,495 1730,520 1730,560 V690 C1730,760 1700,800 1640,850 L1060,1310 C990,1365 945,1385 920,1380 C915,1300 935,1180 1010,1090 L1620,560 C1650,530 1670,500 1700,490 Z" stroke="#ff4d5e" stroke-width="22" fill="none" opacity=".8" filter="url(#bgaBlur)"/>
+ <path d="M1700,490 C1730,495 1730,520 1730,560 V690 C1730,760 1700,800 1640,850 L1060,1310 C990,1365 945,1385 920,1380 C915,1300 935,1180 1010,1090 L1620,560 C1650,530 1670,500 1700,490 Z" fill="url(#bgaRed)" opacity=".92"/>
+ <path d="M1700,490 C1730,495 1730,520 1730,560 V690 C1730,760 1700,800 1640,850 L1060,1310 C990,1365 945,1385 920,1380 C915,1300 935,1180 1010,1090 L1620,560 C1650,530 1670,500 1700,490 Z" stroke="#ffd2d8" stroke-width="3" fill="none" opacity=".85"/>
+ <path d="M1005,1388 L930,1449" stroke="#ff4050" stroke-width="3" fill="none" opacity=".6"/>
+</svg>
+<div id="bgNames" aria-hidden="true"></div>
 <header>
  <div>
   <h1>Sheba Brand Shop Cafe</h1>
@@ -132,10 +184,9 @@ tr.voided td:last-child{text-decoration:none}
  <div class="side-backdrop" id="sideBackdrop"></div>
  <div class="content">
  <button type="button" class="secondary menu-btn" id="menuBtn">☰ Menu</button>
- <div class="notice">
+ <div class="notice hidden" id="noticeBar">
   <strong>Notice:</strong>
-  <span id="connectionStatus">Preparing Supabase connection…</span>
-  · Only Admin can add, edit, delete or import products, transfer stock, and void sales or purchases.
+  <span id="connectionStatus"></span>
  </div>
 
  <div class="toolbar">
@@ -407,6 +458,107 @@ const esc = s => String(s??'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;'
 const parseNum = v => { const s = String(v??'').trim().replace(/,/g,''); return s === '' ? NaN : Number(s); };
 const pad2 = n => String(n).padStart(2,'0');
 
+// Floating branch names in the background
+// Intro: "Sheba Brand Shop Cafe" drops from the top, explodes like a bomb, and the branch names fly out from the blast
+let bgToken = 0, bgShownKey = null;
+function renderBgNames(names){
+  const list = (names || []).filter(Boolean);
+  const key = JSON.stringify(list);
+  if(key === bgShownKey) return;          // same names already shown, don't replay
+  bgShownKey = key;
+  playBgIntro(list, ++bgToken);
+}
+
+async function playBgIntro(list, token){
+  const box = document.getElementById('bgNames');
+  if(!box) return;
+  const alive = () => token === bgToken;
+  const reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const canAnimate = typeof box.animate === 'function' && !reduce;
+  box.innerHTML = '';
+
+  const W = window.innerWidth, H = window.innerHeight;
+  const ix = W / 2, iy = H * 0.5;          // blast point
+
+  // Place the branch names (hidden until the blast)
+  const leftPct = [6, 52, 14, 64, 8, 46, 22, 70, 10, 56];
+  const n = list.length;
+  const inners = list.map((name, i) => {
+    const pct = leftPct[i % leftPct.length];
+    const top = n > 1 ? 8 + i * (80 / n) : 40;
+    const pos = document.createElement('div');
+    pos.className = 'bg-pos';
+    pos.style.cssText = `left:${pct}%;top:${top}%;transform:translateX(-${pct}%)`;
+    const inner = document.createElement('span');
+    inner.className = 'bg-name';
+    inner.textContent = name;
+    inner.style.setProperty('--dur', (5 + Math.random() * 4).toFixed(1) + 's');
+    inner.style.setProperty('--delay', (-Math.random() * 5).toFixed(1) + 's');
+    if(canAnimate) inner.style.opacity = '0';
+    pos.appendChild(inner);
+    box.appendChild(pos);
+    return inner;
+  });
+  if(!canAnimate) return;                  // reduced motion: names just appear
+
+  // 1) Bomb falls from the top (gravity: slow start, fast end)
+  const bomb = document.createElement('div');
+  bomb.className = 'bg-bomb';
+  bomb.textContent = 'Sheba Brand Shop Cafe';
+  box.appendChild(bomb);
+  const bh = bomb.offsetHeight;
+  const landY = iy - bh / 2;
+  await bomb.animate(
+    [{ transform: `translate(-50%,${-bh - 60}px) rotate(-8deg)` }, { transform: `translate(-50%,${landY}px) rotate(0deg)` }],
+    { duration: 1500, easing: 'cubic-bezier(.55,0,1,.45)', fill: 'forwards' }
+  ).finished.catch(() => {});
+  if(!alive()) return;
+
+  // 2) Blast: bomb swells and vanishes, flash, shock ring, sparks, screen shake
+  bomb.animate(
+    [{ transform: `translate(-50%,${landY}px) scale(1)`, opacity: 1 }, { transform: `translate(-50%,${landY}px) scale(1.8)`, opacity: 0 }],
+    { duration: 450, easing: 'ease-out', fill: 'forwards' }
+  );
+  box.animate(
+    [{ transform: 'translate(0,0)' }, { transform: 'translate(-9px,6px)' }, { transform: 'translate(8px,-7px)' },
+     { transform: 'translate(-5px,-4px)' }, { transform: 'translate(3px,3px)' }, { transform: 'translate(0,0)' }],
+    { duration: 420 }
+  );
+  const fx = document.createElement('div');
+  fx.className = 'bg-flash';
+  fx.style.background = `radial-gradient(circle at ${ix}px ${iy}px,rgba(255,235,200,.9),rgba(255,235,200,0) 55%)`;
+  box.appendChild(fx);
+  fx.animate([{ opacity: 0 }, { opacity: 1, offset: .15 }, { opacity: 0 }], { duration: 600, easing: 'ease-out' }).onfinish = () => fx.remove();
+
+  const ring = document.createElement('div');
+  ring.className = 'bg-ring';
+  ring.style.left = ix + 'px'; ring.style.top = iy + 'px';
+  box.appendChild(ring);
+  ring.animate([{ transform: 'scale(1)', opacity: 1 }, { transform: 'scale(30)', opacity: 0 }], { duration: 950, easing: 'ease-out' }).onfinish = () => ring.remove();
+
+  for(let i = 0; i < 28; i++){
+    const sp = document.createElement('div');
+    sp.className = 'bg-spark';
+    sp.style.left = ix + 'px'; sp.style.top = iy + 'px';
+    box.appendChild(sp);
+    const ang = Math.random() * Math.PI * 2, dist = 120 + Math.random() * 320;
+    sp.animate(
+      [{ transform: 'translate(0,0) scale(1)', opacity: 1 }, { transform: `translate(${Math.cos(ang) * dist}px,${Math.sin(ang) * dist}px) scale(.2)`, opacity: 0 }],
+      { duration: 700 + Math.random() * 400, easing: 'cubic-bezier(.1,.7,.3,1)' }
+    ).onfinish = () => sp.remove();
+  }
+
+  // 3) Branch names fly out from the blast point to their places
+  inners.forEach((el, i) => {
+    const r = el.getBoundingClientRect();
+    const dx = ix - (r.left + r.width / 2), dy = iy - (r.top + r.height / 2);
+    el.animate(
+      [{ transform: `translate(${dx}px,${dy}px) scale(.1)`, opacity: 0 }, { transform: 'translate(0,0) scale(1)', opacity: 1 }],
+      { duration: 1200, delay: 150 + i * 90, easing: 'cubic-bezier(.2,.9,.25,1.12)', fill: 'both' }
+    );
+  });
+}
+
 async function fetchAll(build){
   const size = 1000;
   let from = 0, all = [];
@@ -534,6 +686,8 @@ async function loadBranchesFromSupabase(){
 
     branchRows = rows;
     state.branches = rows.map(r => r.name);
+    renderBgNames(state.branches);
+    try { localStorage.setItem('shebaBranchNames', JSON.stringify(state.branches)); } catch(e){}
 
     let allowed = state.branches;
     if(!isAdmin()){
@@ -1596,6 +1750,13 @@ document.getElementById('printBtn').addEventListener('click', () => {
 });
 
 // ========== TABS ==========
+// Show the notice bar only when there is a warning/error to report
+(function(){
+  const el = document.getElementById('connectionStatus'), bar = document.getElementById('noticeBar');
+  const sync = () => bar.classList.toggle('hidden', !/⚠️|failed|could not/i.test(el.textContent));
+  new MutationObserver(sync).observe(el, { childList: true, characterData: true, subtree: true });
+  sync();
+})();
 const closeMenu = () => document.body.classList.remove('menu-open');
 document.getElementById('menuBtn').addEventListener('click', () => document.body.classList.toggle('menu-open'));
 document.getElementById('sideBackdrop').addEventListener('click', closeMenu);
@@ -1615,6 +1776,11 @@ if('serviceWorker' in navigator && /^https?:$/.test(location.protocol)){
 
 // ========== INIT ==========
 setRange('month');
+(function(){
+  let names = [];
+  try { names = JSON.parse(localStorage.getItem('shebaBranchNames') || '[]'); } catch(e){}
+  renderBgNames(Array.isArray(names) ? names : []);
+})();
 setSessionUI().then(() => { if(pendingDenyMessage) authStatus.textContent = pendingDenyMessage; })
   .catch(err => {
     console.error(err);
